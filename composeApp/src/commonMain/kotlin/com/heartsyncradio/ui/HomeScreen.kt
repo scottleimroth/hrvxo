@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -27,6 +31,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -76,15 +82,19 @@ fun HomeScreen(
                 .padding(16.dp)
         ) {
             // Connection status bar
+            val connectionCardColor by animateColorAsState(
+                targetValue = when (connectionState) {
+                    ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primaryContainer
+                    ConnectionState.CONNECTING,
+                    ConnectionState.DISCONNECTING -> MaterialTheme.colorScheme.secondaryContainer
+                    ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.surfaceVariant
+                }
+            )
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = when (connectionState) {
-                        ConnectionState.CONNECTED -> MaterialTheme.colorScheme.primaryContainer
-                        ConnectionState.CONNECTING,
-                        ConnectionState.DISCONNECTING -> MaterialTheme.colorScheme.secondaryContainer
-                        ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.surfaceVariant
-                    }
+                    containerColor = connectionCardColor
                 )
             ) {
                 Row(
@@ -105,10 +115,20 @@ fun HomeScreen(
                         ConnectionState.CONNECTED -> {
                             Spacer(modifier = Modifier.weight(1f))
                             batteryLevel?.let {
-                                Text(
-                                    text = "Battery: $it%",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.BatteryFull,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "$it%",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
                             }
                         }
                         ConnectionState.DISCONNECTED -> {
@@ -154,14 +174,14 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(
+                    TextButton(
                         onClick = onDisconnect,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Disconnect")
+                        Text(
+                            text = "Disconnect",
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
 
@@ -300,6 +320,12 @@ fun HomeScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Stop")
                                 } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text("Scan")
                                 }
                             }
@@ -314,11 +340,21 @@ fun HomeScreen(
                                     .weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "No devices found. Tap Scan to search.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "No devices nearby",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Tap Scan to search",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         } else {
                             LazyColumn(modifier = Modifier.weight(1f)) {
