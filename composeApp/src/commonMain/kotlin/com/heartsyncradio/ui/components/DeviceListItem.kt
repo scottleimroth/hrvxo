@@ -38,11 +38,6 @@ fun DeviceListItem(
                     text = device.name.ifEmpty { "Unknown Device" },
                     style = MaterialTheme.typography.bodyLarge
                 )
-                Text(
-                    text = "ID: ${device.deviceId} | RSSI: ${device.rssi} dBm",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
             FilledTonalButton(onClick = onConnect) {
                 Text("Connect")

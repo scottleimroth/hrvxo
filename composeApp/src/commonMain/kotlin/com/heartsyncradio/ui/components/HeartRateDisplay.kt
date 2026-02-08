@@ -145,36 +145,6 @@ fun HeartRateDisplay(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // RR Intervals card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "RR Intervals (ms)",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (heartRateData.rrIntervals.isEmpty()) {
-                        Text(
-                            text = "No RR interval data",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        Text(
-                            text = heartRateData.rrIntervals.joinToString(", "),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
         }
     }
 }

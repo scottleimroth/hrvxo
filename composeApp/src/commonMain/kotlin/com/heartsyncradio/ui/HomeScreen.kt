@@ -92,20 +92,28 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = when (connectionState) {
-                            ConnectionState.CONNECTED -> "Connected"
-                            ConnectionState.CONNECTING -> "Connecting..."
-                            ConnectionState.DISCONNECTING -> "Disconnecting..."
-                            ConnectionState.DISCONNECTED -> "Disconnected"
-                        },
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    batteryLevel?.let {
-                        Text(
-                            text = "Battery: $it%",
-                            style = MaterialTheme.typography.labelMedium
+                    // Only show dynamic status text
+                    when (connectionState) {
+                        ConnectionState.CONNECTING -> Text(
+                            text = "Connecting...",
+                            style = MaterialTheme.typography.labelLarge
                         )
+                        ConnectionState.DISCONNECTING -> Text(
+                            text = "Disconnecting...",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        ConnectionState.CONNECTED -> {
+                            Spacer(modifier = Modifier.weight(1f))
+                            batteryLevel?.let {
+                                Text(
+                                    text = "Battery: $it%",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                        }
+                        ConnectionState.DISCONNECTED -> {
+                            // Empty - color speaks for itself
+                        }
                     }
                 }
             }
@@ -209,12 +217,6 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Select the type of heart rate monitor you want to connect",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
                                 Spacer(modifier = Modifier.height(24.dp))
 
                                 Card(
@@ -283,13 +285,9 @@ fun HomeScreen(
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Nearby Devices",
-                                style = MaterialTheme.typography.titleMedium
-                            )
                             Button(
                                 onClick = { if (isScanning) onStopScan() else onStartScan() }
                             ) {
