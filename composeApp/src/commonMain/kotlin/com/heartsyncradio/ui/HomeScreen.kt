@@ -88,7 +88,7 @@ fun HomeScreen(
                 )
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -129,7 +129,7 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -232,7 +232,7 @@ fun HomeScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
                                         Text(
                                             text = "Uses the Polar SDK for enhanced features",
                                             style = MaterialTheme.typography.bodySmall,
@@ -241,7 +241,7 @@ fun HomeScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
                                 Card(
                                     onClick = { onSelectDeviceMode("ble") },
@@ -256,7 +256,7 @@ fun HomeScreen(
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
                                         Text(
                                             text = "Any Bluetooth heart rate chest strap",
                                             style = MaterialTheme.typography.bodySmall,

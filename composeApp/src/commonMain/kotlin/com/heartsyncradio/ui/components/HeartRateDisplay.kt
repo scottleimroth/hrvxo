@@ -50,7 +50,7 @@ fun HeartRateDisplay(
                 ) {
                     Text(
                         text = "Sensor contact lost - check strap placement",
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -61,7 +61,7 @@ fun HeartRateDisplay(
             // Heart rate display
             Text(
                 text = "${heartRateData.hr}",
-                fontSize = 72.sp,
+                style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -86,7 +86,7 @@ fun HeartRateDisplay(
                             text = "Coherence",
                             style = MaterialTheme.typography.titleSmall
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -95,7 +95,7 @@ fun HeartRateDisplay(
                             Column {
                                 Text(
                                     text = "${(hrvMetrics.coherenceScore * 100).roundToInt()}%",
-                                    fontSize = 32.sp,
+                                    style = MaterialTheme.typography.headlineLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -108,7 +108,7 @@ fun HeartRateDisplay(
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = "${hrvMetrics.rmssd.roundToInt()} ms",
-                                    fontSize = 24.sp,
+                                    style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
@@ -133,13 +133,8 @@ fun HeartRateDisplay(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Collecting data for coherence analysis...",
+                            text = "Collecting data... (~30 seconds required)",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Requires ~30 seconds of RR data",
-                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
