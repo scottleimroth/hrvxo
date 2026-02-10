@@ -35,7 +35,7 @@ HrvXo connects to a Polar H10 chest strap via Bluetooth LE, processes real-time 
 
 ### Installation
 
-Download the latest APK from the badge above, or from the [Releases page](https://github.com/scottleimroth/HeartSyncRadio/releases).
+Download the latest APK from the badge above, or from the [Releases page](https://github.com/scottleimroth/hrvxo/releases).
 
 1. Open the APK on your Android device
 2. Allow "Install from unknown sources" when prompted
@@ -97,9 +97,10 @@ hrvxo/
 
 ## Roadmap
 
-- [ ] YouTube Music API integration and playlist creation
-- [ ] Session screen with real-time HR/coherence graphs
-- [ ] Local data storage (SQLDelight) for song-coherence tracking
-- [ ] Coherence playlist generation algorithm via Python FastAPI backend
+- [x] YouTube Music integration and playlist creation
+- [x] Session screen with real-time coherence tracking
+- [x] Local data storage (SQLDelight) for song-coherence tracking
+- [x] Coherence playlist generation from leaderboard data
+- [ ] Movement detection (accelerometer + HR anomaly)
 - [ ] iOS support (KMP structure in place)
-- [ ] Enhanced playlist personalization based on coherence scores
+- [ ] Historical session trends and insights
