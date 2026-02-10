@@ -3,6 +3,7 @@ package com.heartsyncradio
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.heartsyncradio.di.AppModule
 import com.heartsyncradio.di.DeviceMode
+import com.heartsyncradio.music.MusicDetectionService
 import com.heartsyncradio.permission.BlePermissionHandler
 import com.heartsyncradio.viewmodel.HomeViewModel
 import com.heartsyncradio.viewmodel.SessionViewModel
@@ -23,6 +25,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewModel: HomeViewModel
     private lateinit var sessionViewModel: SessionViewModel
     private var currentScreen by mutableStateOf(AppScreen.HOME)
+    private var notificationListenerEnabled by mutableStateOf(false)
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -49,6 +52,8 @@ class MainActivity : ComponentActivity() {
             viewModel.onPermissionsResult(true)
         }
 
+        notificationListenerEnabled = MusicDetectionService.isEnabled(this)
+
         setContent {
             // Home state
             val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
@@ -64,6 +69,7 @@ class MainActivity : ComponentActivity() {
             // Session state
             val sessionPhase by sessionViewModel.sessionPhase.collectAsStateWithLifecycle()
             val sessionCurrentSong by sessionViewModel.currentSong.collectAsStateWithLifecycle()
+            val pendingSong by sessionViewModel.pendingSong.collectAsStateWithLifecycle()
             val sessionResults by sessionViewModel.sessionResults.collectAsStateWithLifecycle()
             val settleCountdownSec by sessionViewModel.settleCountdownSec.collectAsStateWithLifecycle()
             val recordingDurationSec by sessionViewModel.recordingDurationSec.collectAsStateWithLifecycle()
@@ -111,6 +117,7 @@ class MainActivity : ComponentActivity() {
                 // Session parameters
                 sessionPhase = sessionPhase,
                 sessionCurrentSong = sessionCurrentSong,
+                pendingSong = pendingSong,
                 sessionResults = sessionResults,
                 settleCountdownSec = settleCountdownSec,
                 recordingDurationSec = recordingDurationSec,
@@ -120,19 +127,29 @@ class MainActivity : ComponentActivity() {
                 totalSongCount = totalSongCount,
                 playlistCreated = playlistCreated,
                 isCreatingPlaylist = isCreatingPlaylist,
+                notificationListenerEnabled = notificationListenerEnabled,
                 onStartSession = sessionViewModel::startSession,
                 onEndSession = sessionViewModel::endSession,
                 onSearchSongs = sessionViewModel::searchSongs,
                 onTagSong = { result ->
-                    sessionViewModel.tagSong(result)
+                    sessionViewModel.selectSong(result)
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://music.youtube.com/watch?v=${result.videoId}"))
                     startActivity(intent)
                 },
                 onCreatePlaylist = sessionViewModel::createPlaylist,
                 onResetSession = sessionViewModel::resetSession,
-                onClearSearchError = sessionViewModel::clearSearchError
+                onClearSearchError = sessionViewModel::clearSearchError,
+                onRequestNotificationListener = {
+                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                }
             )
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Re-check after user returns from settings
+        notificationListenerEnabled = MusicDetectionService.isEnabled(this)
     }
 
     override fun onDestroy() {

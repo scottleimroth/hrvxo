@@ -15,7 +15,7 @@
     <!-- Location permission needed for BLE scanning on older Android versions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- Internet for Spotify API -->
+    <!-- Internet for YouTube Music API -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -35,6 +35,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".music.MusicDetectionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

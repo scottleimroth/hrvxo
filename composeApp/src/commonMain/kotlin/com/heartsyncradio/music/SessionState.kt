@@ -3,6 +3,7 @@ package com.heartsyncradio.music
 enum class SessionPhase {
     NOT_STARTED,
     ACTIVE_NO_SONG,
+    ACTIVE_WAITING_PLAYBACK,  // Song selected, waiting for YouTube Music to start playing
     ACTIVE_SETTLING,
     ACTIVE_RECORDING,
     ENDED

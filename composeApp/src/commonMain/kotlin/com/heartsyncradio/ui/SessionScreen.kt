@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.heartsyncradio.hrv.HrvMetrics
 import com.heartsyncradio.music.SearchResult
@@ -52,6 +53,7 @@ import com.heartsyncradio.ui.components.SongResultCard
 fun SessionScreen(
     sessionPhase: SessionPhase,
     currentSong: TaggedSong?,
+    pendingSong: SearchResult?,
     sessionResults: List<SongSessionResult>,
     settleCountdownSec: Int,
     recordingDurationSec: Int,
@@ -62,6 +64,7 @@ fun SessionScreen(
     totalSongCount: Long,
     playlistCreated: String?,
     isCreatingPlaylist: Boolean,
+    notificationListenerEnabled: Boolean,
     onStartSession: () -> Unit,
     onEndSession: () -> Unit,
     onSearchSongs: (String) -> Unit,
@@ -69,6 +72,7 @@ fun SessionScreen(
     onCreatePlaylist: () -> Unit,
     onResetSession: () -> Unit,
     onClearSearchError: () -> Unit,
+    onRequestNotificationListener: () -> Unit,
     onBack: () -> Unit
 ) {
     var showSearchSheet by remember { mutableStateOf(false) }
@@ -101,7 +105,9 @@ fun SessionScreen(
                 SessionPhase.NOT_STARTED -> {
                     NotStartedContent(
                         hrvMetrics = hrvMetrics,
-                        onStartSession = onStartSession
+                        notificationListenerEnabled = notificationListenerEnabled,
+                        onStartSession = onStartSession,
+                        onRequestNotificationListener = onRequestNotificationListener
                     )
                 }
 
@@ -114,15 +120,44 @@ fun SessionScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "Play a song in YouTube Music, then tag it here",
+                                text = "Search for a song and tap it to open in YouTube Music",
                                 style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "We'll detect playback automatically",
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(onClick = { showSearchSheet = true }) {
-                                Text("Tag Your First Song")
+                                Text("Search Songs")
                             }
                         }
+                    }
+                    if (sessionResults.isNotEmpty()) {
+                        SessionResultsList(
+                            results = sessionResults,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    EndSessionButton(onEndSession)
+                }
+
+                SessionPhase.ACTIVE_WAITING_PLAYBACK -> {
+                    CoherenceHeader(hrvMetrics)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    WaitingForPlaybackCard(pendingSong)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    if (sessionResults.isNotEmpty()) {
+                        SessionResultsList(
+                            results = sessionResults,
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                     EndSessionButton(onEndSession)
                 }
@@ -135,6 +170,8 @@ fun SessionScreen(
                         statusText = "Settling in... ${settleCountdownSec}s",
                         isSettling = true
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    StayStillNotice()
                     Spacer(modifier = Modifier.height(16.dp))
                     SessionResultsList(
                         results = sessionResults,
@@ -152,14 +189,15 @@ fun SessionScreen(
                         isSettling = false,
                         coherence = hrvMetrics?.coherenceScore
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { showSearchSheet = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Tag Next Song")
+                    if (recordingDurationSec < SessionManager_MIN_RECORDING_SEC) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${SessionManager_MIN_RECORDING_SEC - recordingDurationSec}s more for a valid reading",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     SessionResultsList(
                         results = sessionResults,
                         modifier = Modifier.weight(1f)
@@ -198,10 +236,15 @@ fun SessionScreen(
     }
 }
 
+// Constant mirrored from SessionManager for UI display (commonMain can't reference androidMain)
+private const val SessionManager_MIN_RECORDING_SEC = 60
+
 @Composable
 private fun NotStartedContent(
     hrvMetrics: HrvMetrics?,
-    onStartSession: () -> Unit
+    notificationListenerEnabled: Boolean,
+    onStartSession: () -> Unit,
+    onRequestNotificationListener: () -> Unit
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -218,9 +261,10 @@ private fun NotStartedContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Search for a song, tap it, and it will open in YouTube Music automatically. We'll track your cardiac coherence to discover which music your body responds to best.",
+                text = "Search for a song, tap it, and it opens in YouTube Music. We detect playback automatically and track your cardiac coherence.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             if (hrvMetrics != null) {
@@ -237,17 +281,101 @@ private fun NotStartedContent(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (!notificationListenerEnabled) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Notification access required",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "HeartSyncRadio needs notification access to detect what's playing in YouTube Music.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(onClick = onRequestNotificationListener) {
+                            Text("Grant Access")
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             Text(
                 text = "Requires YouTube Music app installed",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onStartSession) {
+            Button(
+                onClick = onStartSession,
+                enabled = notificationListenerEnabled
+            ) {
                 Text("Start Session")
             }
         }
     }
+}
+
+@Composable
+private fun WaitingForPlaybackCard(pendingSong: SearchResult?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (pendingSong != null) {
+                Text(
+                    text = pendingSong.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = pendingSong.artist,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            Text(
+                text = "Waiting for YouTube Music playback...",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun StayStillNotice() {
+    Text(
+        text = "Stay still — settling in before recording",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
@@ -452,7 +580,7 @@ private fun EndedContent(
         val invalidCount = sessionResults.count { !it.isValid }
         if (invalidCount > 0) {
             Text(
-                text = "$invalidCount song(s) skipped — need at least 60s for a valid reading",
+                text = "$invalidCount song(s) had less than 60s of data — not counted",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

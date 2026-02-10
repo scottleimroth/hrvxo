@@ -40,6 +40,7 @@ fun App(
     // Session parameters
     sessionPhase: SessionPhase = SessionPhase.NOT_STARTED,
     sessionCurrentSong: TaggedSong? = null,
+    pendingSong: SearchResult? = null,
     sessionResults: List<SongSessionResult> = emptyList(),
     settleCountdownSec: Int = 0,
     recordingDurationSec: Int = 0,
@@ -49,13 +50,15 @@ fun App(
     totalSongCount: Long = 0,
     playlistCreated: String? = null,
     isCreatingPlaylist: Boolean = false,
+    notificationListenerEnabled: Boolean = false,
     onStartSession: () -> Unit = {},
     onEndSession: () -> Unit = {},
     onSearchSongs: (String) -> Unit = {},
     onTagSong: (SearchResult) -> Unit = {},
     onCreatePlaylist: () -> Unit = {},
     onResetSession: () -> Unit = {},
-    onClearSearchError: () -> Unit = {}
+    onClearSearchError: () -> Unit = {},
+    onRequestNotificationListener: () -> Unit = {}
 ) {
     MaterialTheme {
         when (currentScreen) {
@@ -82,6 +85,7 @@ fun App(
             AppScreen.SESSION -> SessionScreen(
                 sessionPhase = sessionPhase,
                 currentSong = sessionCurrentSong,
+                pendingSong = pendingSong,
                 sessionResults = sessionResults,
                 settleCountdownSec = settleCountdownSec,
                 recordingDurationSec = recordingDurationSec,
@@ -92,6 +96,7 @@ fun App(
                 totalSongCount = totalSongCount,
                 playlistCreated = playlistCreated,
                 isCreatingPlaylist = isCreatingPlaylist,
+                notificationListenerEnabled = notificationListenerEnabled,
                 onStartSession = onStartSession,
                 onEndSession = onEndSession,
                 onSearchSongs = onSearchSongs,
@@ -99,6 +104,7 @@ fun App(
                 onCreatePlaylist = onCreatePlaylist,
                 onResetSession = onResetSession,
                 onClearSearchError = onClearSearchError,
+                onRequestNotificationListener = onRequestNotificationListener,
                 onBack = {
                     onResetSession()
                     onNavigate(AppScreen.HOME)

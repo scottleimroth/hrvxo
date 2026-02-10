@@ -3,7 +3,9 @@ package com.heartsyncradio.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.heartsyncradio.ble.HrDeviceManager
+import com.heartsyncradio.music.DetectedTrack
 import com.heartsyncradio.music.MusicApiClient
+import com.heartsyncradio.music.MusicDetectionService
 import com.heartsyncradio.music.SearchResult
 import com.heartsyncradio.music.SessionManager
 import com.heartsyncradio.music.SessionPhase
@@ -26,6 +28,7 @@ class SessionViewModel(
 
     val sessionPhase: StateFlow<SessionPhase> = sessionManager.phase
     val currentSong = sessionManager.currentSong
+    val pendingSong = sessionManager.pendingSong
     val sessionResults: StateFlow<List<SongSessionResult>> = sessionManager.results
     val settleCountdownSec = sessionManager.settleCountdownSec
     val recordingDurationSec = sessionManager.recordingDurationSec
@@ -52,10 +55,15 @@ class SessionViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private var metricsCollectionJob: kotlinx.coroutines.Job? = null
+    private var playbackMonitorJob: kotlinx.coroutines.Job? = null
 
     fun startSession() {
         sessionManager.startSession()
-        // Start collecting HRV metrics from the current device manager
+        startMetricsCollection()
+        startPlaybackMonitoring()
+    }
+
+    private fun startMetricsCollection() {
         metricsCollectionJob?.cancel()
         metricsCollectionJob = viewModelScope.launch {
             deviceManagerProvider().hrvMetrics.collect { metrics ->
@@ -65,6 +73,55 @@ class SessionViewModel(
                     )
                 ) {
                     sessionManager.recordMetrics(metrics, System.currentTimeMillis())
+                }
+            }
+        }
+    }
+
+    private fun startPlaybackMonitoring() {
+        playbackMonitorJob?.cancel()
+
+        // Track the last detected track to know when song changes
+        var lastTrack: DetectedTrack? = null
+
+        playbackMonitorJob = viewModelScope.launch {
+            // Combine track and playback state changes
+            launch {
+                MusicDetectionService.currentTrack.collect { track ->
+                    val isPlaying = MusicDetectionService.isPlaying.value
+                    val now = System.currentTimeMillis()
+
+                    if (track != null && isPlaying) {
+                        if (lastTrack == null) {
+                            // First track detected — playback started
+                            sessionManager.onPlaybackDetected(
+                                track.title, track.artist, now
+                            )
+                        } else if (track != lastTrack) {
+                            // Song changed while playing
+                            sessionManager.onSongChanged(
+                                track.title, track.artist, now
+                            )
+                        }
+                    }
+                    lastTrack = track
+                }
+            }
+            launch {
+                MusicDetectionService.isPlaying.collect { playing ->
+                    val track = MusicDetectionService.currentTrack.value
+                    val now = System.currentTimeMillis()
+
+                    if (!playing && lastTrack != null) {
+                        // Playback stopped
+                        sessionManager.onPlaybackStopped(now)
+                    } else if (playing && track != null && lastTrack == null) {
+                        // Playback resumed/started
+                        sessionManager.onPlaybackDetected(
+                            track.title, track.artist, now
+                        )
+                        lastTrack = track
+                    }
                 }
             }
         }
@@ -85,8 +142,8 @@ class SessionViewModel(
         }
     }
 
-    fun tagSong(result: SearchResult) {
-        sessionManager.tagSong(result, System.currentTimeMillis())
+    fun selectSong(result: SearchResult) {
+        sessionManager.selectSong(result)
         _searchResults.value = emptyList()
     }
 
@@ -94,6 +151,7 @@ class SessionViewModel(
         val now = System.currentTimeMillis()
         sessionManager.endSession(now)
         metricsCollectionJob?.cancel()
+        playbackMonitorJob?.cancel()
 
         // Save valid results to database
         viewModelScope.launch {
@@ -138,6 +196,7 @@ class SessionViewModel(
 
     fun resetSession() {
         metricsCollectionJob?.cancel()
+        playbackMonitorJob?.cancel()
         sessionManager.reset()
         _searchResults.value = emptyList()
         _playlistCreated.value = null
