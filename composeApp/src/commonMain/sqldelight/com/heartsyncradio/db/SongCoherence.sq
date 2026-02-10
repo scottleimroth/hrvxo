@@ -1,0 +1,32 @@
+CREATE TABLE song_coherence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    avg_coherence REAL NOT NULL,
+    avg_rmssd REAL NOT NULL,
+    mean_hr REAL NOT NULL,
+    duration_listened_sec INTEGER NOT NULL,
+    session_date INTEGER NOT NULL
+);
+
+CREATE INDEX idx_video_id ON song_coherence(video_id);
+
+insertSong:
+INSERT INTO song_coherence(video_id, title, artist, avg_coherence, avg_rmssd, mean_hr, duration_listened_sec, session_date)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+topCoherenceSongs:
+SELECT video_id, title, artist, AVG(avg_coherence) AS score, COUNT(*) AS listen_count
+FROM song_coherence
+GROUP BY video_id
+ORDER BY score DESC
+LIMIT ?;
+
+allSongsForSession:
+SELECT * FROM song_coherence
+WHERE session_date = ?
+ORDER BY id ASC;
+
+songCount:
+SELECT COUNT(DISTINCT video_id) FROM song_coherence;

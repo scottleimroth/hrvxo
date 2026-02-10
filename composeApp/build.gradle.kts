@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -45,6 +46,14 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
+
+            // Ktor HTTP client
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.json)
+
+            // SQLDelight
+            implementation(libs.sqldelight.coroutines)
         }
 
         androidMain.dependencies {
@@ -57,6 +66,12 @@ kotlin {
             implementation(libs.polar.ble.sdk)
             implementation(libs.rxjava3)
             implementation(libs.rxandroid)
+
+            // Ktor engine (Android)
+            implementation(libs.ktor.client.okhttp)
+
+            // SQLDelight driver (Android)
+            implementation(libs.sqldelight.android.driver)
         }
 
         // Uncomment when adding iOS:
@@ -98,4 +113,12 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+sqldelight {
+    databases {
+        create("HrvXoDatabase") {
+            packageName.set("com.heartsyncradio.db")
+        }
+    }
 }

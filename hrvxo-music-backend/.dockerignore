@@ -1,0 +1,16 @@
+# flyctl launch added from .gitignore
+**\__pycache__
+**\*.pyc
+**\*.pyo
+**\.env
+**\.env.*
+**\oauth.json
+**\*.key
+**\*.pem
+**\.venv
+**\venv
+**\dist
+**\*.egg-info
+**\.DS_Store
+**\Thumbs.db
+fly.toml

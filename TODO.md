@@ -1,22 +1,24 @@
-# HeartSync Radio - Development Log & TODO
+# HrvXo - Development Log & TODO
 
 ## Last Session
 
-- **Date:** 2026-02-04
-- **Summary:** Built device chooser UI, app icon, HRV methodology document, and improved spectral accuracy
+- **Date:** 2026-02-10
+- **Summary:** Built YouTube Music backend (FastAPI + ytmusicapi) and wired full Android integration — Ktor HTTP client, SQLDelight database, SessionManager, SessionViewModel, and Session Screen UI
 - **Key changes:**
-  - Added device chooser UI: "Choose Your Sensor" screen with Polar H10 and Generic BLE HR Monitor cards, plus "Change Device" button
-  - Created HrDeviceManager interface and GenericBleManager for multi-device support
-  - Updated HomeViewModel with flatMapLatest for dynamic device manager switching
-  - Generated Android launcher icons from HeartSyncRadio logo (all mipmap densities + adaptive icon)
-  - Wrote HRV_METHODOLOGY.md: comprehensive scientific methodology document for external scrutiny
-  - Switched spectral integration from rectangular to trapezoidal rule (LF error 23%→5.8%, HF error 16.5%→8.8%)
-  - Tested cubic spline resampling — proved worse (HF error 78.9%), reverted to linear with evidence-based rationale in code
-  - Extracted CubicSpline.kt shared utility from ArtifactDetector (eliminated code duplication)
-  - Tightened PhysioNet spectral power test tolerances from 50% to 15%
-  - All 40 HRV tests passing
-- **Stopped at:** All code complete. Spotify integration is next but blocked on developer registration.
-- **Blockers:** Spotify Developer registration frozen since December 2025. Cannot proceed with music integration until access is granted.
+  - Created `hrvxo-music-backend/` — FastAPI backend with POST /search, POST /create-playlist, GET /health endpoints
+  - Deployed backend to Fly.io Sydney region (`https://hrvxo-music.fly.dev`)
+  - Fixed Fly.io crash: switched OAuth from JSON env var to base64 encoding (YTMUSIC_OAUTH_B64)
+  - Added Ktor 3.0.3 HTTP client with ContentNegotiation + kotlinx.serialization.json
+  - Added SQLDelight 2.0.2 local database for song-coherence tracking (song_coherence table)
+  - Created SessionManager: 15s settle-in, 60s minimum recording, per-song coherence tracking
+  - Created SessionViewModel: search, tag songs, end session, save to DB, create playlist from leaderboard
+  - Created SessionScreen UI with all 5 session phases (NOT_STARTED → ACTIVE_NO_SONG → ACTIVE_SETTLING → ACTIVE_RECORDING → ENDED)
+  - Added navigation: enum-based AppScreen (HOME, SESSION) switching in App.kt
+  - Added "Start Music Session" button on HomeScreen (CONNECTED state only)
+  - Replaced Spotify integration plan with YouTube Music (ytmusicapi via backend proxy)
+  - All 40 existing HRV tests unaffected
+- **Stopped at:** All YouTube Music integration code complete. Ready for on-device testing.
+- **Blockers:** None — backend deployed and app wired up
 
 ---
 
@@ -36,12 +38,17 @@
 - 40 unit tests all passing (PhysioNet spectral validation within 15% of scipy reference)
 - App icon (generated from logo, adaptive icon support)
 - HRV_METHODOLOGY.md scientific methodology document
+- YouTube Music backend deployed at `https://hrvxo-music.fly.dev` (FastAPI + ytmusicapi)
+- Ktor HTTP client wired to backend (search songs, create playlists)
+- SQLDelight local database for song-coherence persistence
+- Session screen UI with 5 phase states and song search bottom sheet
+- Coherence-based playlist generation from user's actual leaderboard data
 
 ### In Progress
-- Spotify integration (blocked on developer registration)
+- On-device testing of full music session flow
 
 ### Known Bugs
-- None identified yet (untested on physical device)
+- None identified yet (needs physical device testing with Polar H10 + YouTube Music)
 
 ---
 
@@ -56,47 +63,40 @@
     - [x] PhysioNet spectral powers within 15% of scipy reference (LF: 5.8% error, HF: 8.8% error)
     - [x] Tightened spectral power tolerances from 50% to 15%
     - [x] HRV metrics displayed in UI (coherence score + RMSSD)
-2. [ ] **Spotify Integration:**
-    - [ ] Register Spotify Developer app, get client ID + redirect URI
-    - [ ] Implement Spotify OAuth (PKCE flow for mobile — no client secret needed)
-    - [ ] Fetch user playlists and track information
-    - [ ] Detect currently playing track (Spotify Web API `player/currently-playing`)
-    - [ ] Create new playlists via API
-3. [ ] **Music Session Mode:**
-    - [ ] Session screen: Start/End Session button, real-time coherence graph, current track display
-    - [ ] 60-second baseline period (no music) to establish resting coherence before songs play
-    - [ ] 15-second settle-in exclusion at start of each new song (cardiac transition response)
-    - [ ] Auto-detect song changes via Spotify API polling (no per-song button needed)
-    - [ ] Minimum 60 seconds of listening per song for a valid coherence reading (Task Force HRV guideline)
-    - [ ] If song skipped before 60s: toast "Skipped — need at least 1 min for a reading"
-    - [ ] Per-song feedback card after each track: coherence score with colour rating (red/amber/green)
-    - [ ] Session summary on End: songs analysed, average coherence, top song, movement warnings
-4. [ ] **Movement Detection:**
+2. [x] **YouTube Music Integration (replaced Spotify):**
+    - [x] Build FastAPI backend with ytmusicapi (POST /search, POST /create-playlist, GET /health)
+    - [x] Deploy to Fly.io Sydney region
+    - [x] Wire Ktor HTTP client in Android app
+    - [x] Song search and tagging via backend proxy
+3. [x] **Music Session Mode:**
+    - [x] Session screen with 5 phase states (NOT_STARTED, ACTIVE_NO_SONG, ACTIVE_SETTLING, ACTIVE_RECORDING, ENDED)
+    - [x] 15-second settle-in exclusion at start of each new song
+    - [x] Minimum 60 seconds per song for valid coherence reading
+    - [x] Per-song coherence result cards with validity indicator
+    - [x] Session summary on End: songs analysed, average coherence, best song
+    - [x] Manual song tagging (YouTube Music has no "now playing" API)
+4. [x] **Song-Coherence Database:**
+    - [x] SQLDelight local database (song_coherence table)
+    - [x] Store per-song coherence results after each valid reading
+    - [x] Top coherence songs leaderboard (AVG grouped by video_id)
+    - [x] Song count tracking for playlist generation threshold
+5. [x] **Playlist Generation:**
+    - [x] Progress indicator: "3/3 songs — ready for playlist" (3 song minimum for MVP)
+    - [x] "Create Coherence Playlist" button: takes top songs from leaderboard, creates YouTube Music playlist
+    - [x] Primary generation always from user's actual coherence leaderboard
+6. [ ] **Movement Detection:**
     - [ ] Phone accelerometer monitoring via Android SensorManager (TYPE_LINEAR_ACCELERATION)
     - [ ] Rolling movement score: flag when acceleration exceeds resting threshold
     - [ ] HR anomaly detection: flag sudden HR spikes (>30 BPM above rolling average) not explained by music change
-    - [ ] Combine both signals: accelerometer catches phone movement, HR catches body movement when phone is stationary
-    - [ ] Per-song movement badge: "Movement detected — score may be less accurate" (data kept, weighted lower)
-    - [ ] If excessive movement throughout song: "Too much movement — no reading recorded"
-5. [ ] **Song-Coherence Database:**
-    - [ ] Set up SQLDelight local database
-    - [ ] Schema: track_id, track_name, artist, avg_coherence, peak_coherence, avg_hr, rmssd, duration_listened, baseline_coherence, movement_confidence, session_date
-    - [ ] Store per-song coherence results after each valid reading
-    - [ ] Track improvement over multiple sessions
-6. [ ] **Playlist Generation:**
-    - [ ] Progress indicator: "8/10 songs — almost ready for your first playlist!"
-    - [ ] Minimum 10 songs with valid readings before first playlist can be generated
-    - [ ] "Create Coherence Playlist" button: takes top-scoring songs, creates Spotify playlist
-    - [ ] Running leaderboard: "Your Top 5 Coherence Songs" visible in app
-    - [ ] Weight scores by movement confidence (clean readings count more)
-    - [ ] Insights: "Your coherence is X% higher with slower tempo songs" (after 20+ songs)
+    - [ ] Per-song movement badge: "Movement detected — score may be less accurate"
 
 ---
 
 ## TODO - Nice to Have
 
-- [ ] Onboarding flow: Polar H10 pairing guide → Spotify login → first session walkthrough
-- [ ] Genre/tempo analysis: correlate Spotify audio features (tempo, energy, valence) with coherence
+- [ ] Cold-start suggestions for new users with zero session data (search "ambient meditation calm", etc.)
+- [ ] Onboarding flow: Polar H10 pairing guide → YouTube Music setup → first session walkthrough
+- [ ] Genre/tempo analysis: correlate audio features with coherence scores
 - [ ] Re-listen mode: replay top coherence songs and see if scores hold across sessions
 - [ ] iOS support (KMP structure ready, targets commented out)
 - [ ] Dark mode / theme customization
@@ -104,6 +104,7 @@
 - [ ] Historical session tracking and trends chart
 - [x] App icon and branding assets (generated from logo)
 - [ ] Session reminders / streak tracking ("Listen for 10 minutes daily")
+- [ ] Insights: "Your coherence is X% higher with slower tempo songs" (after 20+ songs)
 
 ---
 
@@ -130,6 +131,15 @@
 - [x] Switch spectral integration to trapezoidal rule (LF error 23%→5.8%, HF 16.5%→8.8%) (2026-02-04)
 - [x] Extract CubicSpline.kt shared utility from ArtifactDetector (2026-02-04)
 - [x] Tighten PhysioNet spectral test tolerances from 50% to 15% (2026-02-04)
+- [x] Build YouTube Music backend (FastAPI + ytmusicapi) with search and playlist creation (2026-02-10)
+- [x] Deploy backend to Fly.io Sydney region (2026-02-10)
+- [x] Wire Ktor HTTP client to backend (2026-02-10)
+- [x] Set up SQLDelight database for song-coherence tracking (2026-02-10)
+- [x] Build SessionManager with 15s settle-in and 60s minimum recording (2026-02-10)
+- [x] Build SessionViewModel with search, tag, end session, create playlist (2026-02-10)
+- [x] Create SessionScreen UI with 5 session phases (2026-02-10)
+- [x] Add enum-based navigation (HOME ↔ SESSION) (2026-02-10)
+- [x] Wire MainActivity with SessionViewModel integration (2026-02-10)
 
 ---
 
@@ -152,10 +162,13 @@
 | HrDeviceManager interface | Abstracts Polar SDK vs standard BLE; enables device chooser | 2026-02-04 |
 | 60s minimum per song | Task Force HRV guidelines: 60s minimum for reliable short-term metrics; aligns with 64s coherence window | 2026-02-04 |
 | 15s settle-in exclusion | Cardiac response to new auditory stimulus stabilises in ~10-15s; 30s too aggressive for session flow | 2026-02-04 |
-| Dual movement detection | Phone accelerometer + HR anomaly; neither alone is sufficient (phone may not be on person) | 2026-02-04 |
-| Spotify PKCE OAuth | Mobile app — no backend server to hold client secret; PKCE flow is standard for native apps | 2026-02-04 |
-| 10 songs minimum for playlist | Fewer than 10 songs gives unreliable ranking; 10-15 is minimum viable, 20-30 is solid | 2026-02-04 |
-| Soft movement warnings | Don't discard data on movement — flag it and weight lower; user shouldn't feel penalised | 2026-02-04 |
+| YouTube Music via backend proxy | Spotify registration frozen; ytmusicapi provides search + playlist creation via FastAPI backend | 2026-02-10 |
+| Manual song tagging | YouTube Music has no "now playing" API (unlike Spotify); user searches and taps to tag | 2026-02-10 |
+| Ktor 3.0.3 HTTP client | KMP-compatible; ContentNegotiation with kotlinx.serialization.json | 2026-02-10 |
+| SQLDelight for local DB | KMP-compatible; type-safe SQL with coroutines Flow support | 2026-02-10 |
+| Enum-based navigation | Simple state-driven screen switching; no nav library needed at this scale | 2026-02-10 |
+| 3 song minimum for playlist | MVP threshold; lower than original 10 to let users experience playlist creation faster | 2026-02-10 |
+| Leaderboard-based playlists | Primary generation always from user's actual coherence data, not genre assumptions | 2026-02-10 |
 
 ---
 
@@ -166,9 +179,11 @@
 - `searchForDevice()` Flowable runs indefinitely until disposed -- always show Stop button
 - PolarManager is a singleton tied to Activity lifecycle (shutDown in onDestroy when isFinishing)
 - JetBrains lifecycle libraries use different versioning than AndroidX (2.8.4 not 2.8.7)
-- Root folder still named `polar-H10-app` (VS Code lock) -- rename to HeartSyncRadio when convenient
 - PhysioNet Subject 000 (53M, healthy) scipy reference values for 5-min segment: RMSSD=52.62ms, MeanHR=61.23bpm, LF=273.53ms², HF=283.39ms²
 - Welch PSD params matching scipy: nperseg=256, noverlap=128, window='hann', fs=4.0Hz
 - JAVA_HOME needs to be set to Android Studio JBR for Gradle: `C:\Program Files\Android\Android Studio\jbr`
 - **IMPORTANT: Always commit and push to the private GitHub repo before finishing a session**
-- Remote configured: private GitHub repo HeartSyncRadio
+- Remote configured: private GitHub repo HrvXo
+- YouTube Music backend at `https://hrvxo-music.fly.dev` — uses base64-encoded OAuth (YTMUSIC_OAUTH_B64 env var)
+- oauth.json is gitignored — never commit it
+- SessionViewModel uses lambda provider `() -> HrDeviceManager` to get current device manager (avoids coupling to AppModule nullable state)

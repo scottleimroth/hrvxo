@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -63,7 +62,8 @@ fun HomeScreen(
     onConnectDevice: (String) -> Unit,
     onDisconnect: () -> Unit,
     onClearError: () -> Unit,
-    onRequestPermissions: () -> Unit
+    onRequestPermissions: () -> Unit,
+    onStartSession: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -119,13 +119,8 @@ fun HomeScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.BatteryFull,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
                                     Text(
-                                        text = "$it%",
+                                        text = "BAT $it%",
                                         style = MaterialTheme.typography.labelMedium
                                     )
                                 }
@@ -174,6 +169,13 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onStartSession,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Start Music Session")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     TextButton(
                         onClick = onDisconnect,
                         modifier = Modifier.fillMaxWidth()
