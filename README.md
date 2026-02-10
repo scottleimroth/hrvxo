@@ -32,6 +32,7 @@ HrvXo connects to a Polar H10 chest strap via Bluetooth LE, processes real-time 
 - Android 8.0+ (API 26)
 - Polar H10 chest strap
 - Bluetooth enabled on device
+- [YouTube Music](https://play.google.com/store/apps/details?id=com.google.android.apps.youtube.music) app installed (for music session playback)
 
 ### Installation
 

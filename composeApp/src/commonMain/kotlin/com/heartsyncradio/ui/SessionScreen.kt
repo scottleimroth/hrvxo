@@ -218,7 +218,7 @@ private fun NotStartedContent(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Play music in YouTube Music while we track your cardiac coherence. Tag each song to discover which music your body responds to best.",
+                text = "Search for a song, tap it, and it will open in YouTube Music automatically. We'll track your cardiac coherence to discover which music your body responds to best.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -236,7 +236,13 @@ private fun NotStartedContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Requires YouTube Music app installed",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onStartSession) {
                 Text("Start Session")
             }
