@@ -1,4 +1,4 @@
-rootProject.name = "HeartSyncRadio"
+rootProject.name = "HrvXo"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 

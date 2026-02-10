@@ -262,8 +262,10 @@ private fun NotStartedContent(
         ) {
             Text(
                 text = "Coherence Playlist Session",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
@@ -307,7 +309,7 @@ private fun NotStartedContent(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "HeartSyncRadio needs notification access to detect what's playing in YouTube Music.",
+                            text = "HrvXo needs notification access to detect what's playing in YouTube Music.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             textAlign = TextAlign.Center

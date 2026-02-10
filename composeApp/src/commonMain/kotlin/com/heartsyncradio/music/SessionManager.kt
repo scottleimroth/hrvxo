@@ -116,6 +116,13 @@ class SessionManager {
         _recordingDurationSec.value = 0
     }
 
+    fun reportMovement() {
+        val song = _currentSong.value ?: return
+        if (_phase.value == SessionPhase.ACTIVE_RECORDING) {
+            song.movementDetected = true
+        }
+    }
+
     fun recordMetrics(metrics: HrvMetrics, currentTimeMillis: Long) {
         val song = _currentSong.value ?: return
 
@@ -129,6 +136,14 @@ class SessionManager {
                 }
             }
             SessionPhase.ACTIVE_RECORDING -> {
+                // HR anomaly: flag if HR > rolling average + 30 BPM
+                if (song.hrReadings.size >= 5) {
+                    val rollingAvg = song.hrReadings.takeLast(10).average()
+                    if (metrics.meanHr > rollingAvg + 30) {
+                        song.movementDetected = true
+                    }
+                }
+
                 song.coherenceReadings.add(metrics.coherenceScore)
                 song.rmssdReadings.add(metrics.rmssd)
                 song.hrReadings.add(metrics.meanHr)
@@ -173,7 +188,8 @@ class SessionManager {
                 avgRmssd = if (song.rmssdReadings.isNotEmpty()) song.rmssdReadings.average() else 0.0,
                 meanHr = if (song.hrReadings.isNotEmpty()) song.hrReadings.average() else 0.0,
                 durationListenedSec = durationSec,
-                isValid = durationSec >= MIN_RECORDING_SEC
+                isValid = durationSec >= MIN_RECORDING_SEC,
+                movementDetected = song.movementDetected
             )
             _results.value = _results.value + result
         }

@@ -1,4 +1,4 @@
-# HeartSync Radio - Security Audit Checklist
+# HrvXo - Security Audit Checklist
 
 ## ABSOLUTE RULE: CREDENTIALS.md MUST NEVER BE PUBLIC
 

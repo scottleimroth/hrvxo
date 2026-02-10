@@ -1,6 +1,6 @@
-# HeartSync Radio - HRV Processing Methodology
+# HrvXo - HRV Processing Methodology
 
-> This document describes the heart rate variability (HRV) processing pipeline used by HeartSync Radio. It is intended for scientists, clinicians, and reviewers who want to understand exactly how raw sensor data is transformed into the metrics displayed in the app.
+> This document describes the heart rate variability (HRV) processing pipeline used by HrvXo. It is intended for scientists, clinicians, and reviewers who want to understand exactly how raw sensor data is transformed into the metrics displayed in the app.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ### Sensor Input
 
-HeartSync Radio supports two BLE input modes:
+HrvXo supports two BLE input modes:
 
 - **Polar H10** via the Polar BLE SDK, which provides RR intervals in milliseconds through the SDK's streaming API.
 - **Generic BLE Heart Rate Profile** (UUID `0x180D`), which parses the Heart Rate Measurement characteristic (`0x2A37`) per the Bluetooth specification. RR intervals are extracted from the characteristic payload, where they are encoded as unsigned 16-bit integers in units of 1/1024 seconds, then converted to milliseconds:

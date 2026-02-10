@@ -11,6 +11,7 @@ import com.heartsyncradio.music.SessionManager
 import com.heartsyncradio.music.SessionPhase
 import com.heartsyncradio.music.SongCoherenceRepository
 import com.heartsyncradio.music.SongSessionResult
+import com.heartsyncradio.sensor.MovementDetector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,8 @@ import kotlinx.coroutines.launch
 class SessionViewModel(
     private val deviceManagerProvider: () -> HrDeviceManager,
     private val musicApiClient: MusicApiClient,
-    private val repository: SongCoherenceRepository
+    private val repository: SongCoherenceRepository,
+    private val movementDetector: MovementDetector
 ) : ViewModel() {
 
     private val sessionManager = SessionManager()
@@ -57,11 +59,26 @@ class SessionViewModel(
 
     private var metricsCollectionJob: kotlinx.coroutines.Job? = null
     private var playbackMonitorJob: kotlinx.coroutines.Job? = null
+    private var movementMonitorJob: kotlinx.coroutines.Job? = null
 
     fun startSession() {
         sessionManager.startSession()
         startMetricsCollection()
         startPlaybackMonitoring()
+        startMovementMonitoring()
+    }
+
+    private fun startMovementMonitoring() {
+        movementDetector.start()
+        movementDetector.resetSongMovement()
+        movementMonitorJob?.cancel()
+        movementMonitorJob = viewModelScope.launch {
+            movementDetector.isMoving.collect { moving ->
+                if (moving && sessionPhase.value == SessionPhase.ACTIVE_RECORDING) {
+                    sessionManager.reportMovement()
+                }
+            }
+        }
     }
 
     private fun startMetricsCollection() {
@@ -169,6 +186,8 @@ class SessionViewModel(
         sessionManager.endSession(now)
         metricsCollectionJob?.cancel()
         playbackMonitorJob?.cancel()
+        movementMonitorJob?.cancel()
+        movementDetector.stop()
         MusicDetectionService.pausePlayback()
 
         // Save valid results to database
@@ -215,6 +234,8 @@ class SessionViewModel(
     fun resetSession() {
         metricsCollectionJob?.cancel()
         playbackMonitorJob?.cancel()
+        movementMonitorJob?.cancel()
+        movementDetector.stop()
         sessionManager.reset()
         _searchResults.value = emptyList()
         _playlistCreated.value = null

@@ -102,6 +102,6 @@ hrvxo/
 - [x] Session screen with real-time coherence tracking
 - [x] Local data storage (SQLDelight) for song-coherence tracking
 - [x] Coherence playlist generation from leaderboard data
-- [ ] Movement detection (accelerometer + HR anomaly)
+- [x] Movement detection (accelerometer + HR anomaly)
 - [ ] iOS support (KMP structure in place)
 - [ ] Historical session trends and insights

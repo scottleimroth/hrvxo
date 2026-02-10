@@ -14,7 +14,8 @@ data class TaggedSong(
     val taggedAtMillis: Long,
     val coherenceReadings: MutableList<Double> = mutableListOf(),
     val rmssdReadings: MutableList<Double> = mutableListOf(),
-    val hrReadings: MutableList<Double> = mutableListOf()
+    val hrReadings: MutableList<Double> = mutableListOf(),
+    var movementDetected: Boolean = false
 )
 
 data class SongSessionResult(
@@ -23,5 +24,6 @@ data class SongSessionResult(
     val avgRmssd: Double,
     val meanHr: Double,
     val durationListenedSec: Int,
-    val isValid: Boolean
+    val isValid: Boolean,
+    val movementDetected: Boolean = false
 )

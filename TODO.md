@@ -3,23 +3,19 @@
 ## Last Session
 
 - **Date:** 2026-02-11
-- **Summary:** Added automatic music detection via NotificationListenerService, fixed APK signing, and multiple rounds of on-device testing with UX fixes
+- **Summary:** Added movement detection, wired accelerometer into session pipeline, renamed app to HrvXo, fixed UI text alignment
 - **Key changes:**
-  - Added MusicDetectionService (NotificationListenerService) — auto-detects YouTube Music track changes and play/pause state via MediaSessionManager
-  - Fixed release APK signing (unsigned APKs wouldn't install) — added debug signingConfig to release build type
-  - Bumped version to v1.1.0 (versionCode 2), created GitHub Release
-  - Fixed session auto-detecting already-playing songs — baseline track snapshot + `hasUserSelectedSong` flag ensures session always starts at song search
-  - Replaced "Collecting data ~30s" card with subtle "Analysing heart rate..." text on home screen
-  - Changed "Settling in" to "Calibrating" terminology
-  - Added 60s milestone notice during recording ("Valid reading collected. Continue for more accuracy...")
-  - Added movement/duration instructions to session start screen
-  - Made "Coherence Playlist Session" heading smaller (titleLarge) to fit one line
-  - Added auto-return to HrvXo after opening YouTube Music (1.5s delay + FLAG_ACTIVITY_REORDER_TO_FRONT)
-  - Added YTM pause on session end via MediaController.transportControls.pause()
-  - Added early-end message card when session ended before 60s with no valid songs
-  - Added ACTIVE_WAITING_PLAYBACK phase to session flow (6 phases total now)
-- **Stopped at:** All on-device feedback addressed. v1.1.0 released. Ready for next round of testing.
-- **Blockers:** YTM ads cannot be controlled from external apps — YTM Premium only
+  - Created MovementDetector class (accelerometer-based, rolling average, 0.5 m/s² threshold)
+  - Added movementDetected flag to TaggedSong and SongSessionResult
+  - SessionManager.reportMovement() + HR anomaly detection (>30 BPM spike)
+  - Wired MovementDetector into SessionViewModel (start/stop with session lifecycle)
+  - AppModule provides MovementDetector singleton to SessionViewModel
+  - Movement badge UI on SongResultCard (red "Movement" chip when detected)
+  - Fixed "Coherence Playlist Session" heading — titleMedium, centred, fits single line
+  - Renamed HeartSync Radio to HrvXo everywhere (strings, manifest, themes, HomeScreen, settings.gradle, docs)
+  - Version bump to v1.2.0 (versionCode 3)
+- **Stopped at:** All changes complete. v1.2.0 built and released.
+- **Blockers:** None
 
 ---
 
@@ -48,6 +44,7 @@
 - Auto music detection via NotificationListenerService (track changes + play/pause)
 - Session pause YTM on end, auto-return to app after YTM launch
 - Early-end handling with user-friendly message
+- Movement detection via accelerometer + HR anomaly flagging
 - v1.1.0 released on GitHub with signed APK
 
 ### In Progress

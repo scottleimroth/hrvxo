@@ -11,6 +11,7 @@ import com.heartsyncradio.db.createDatabase
 import com.heartsyncradio.music.MusicApiClient
 import com.heartsyncradio.music.SongCoherenceRepository
 import com.heartsyncradio.polar.PolarManager
+import com.heartsyncradio.sensor.MovementDetector
 import com.heartsyncradio.viewmodel.HomeViewModel
 import com.heartsyncradio.viewmodel.SessionViewModel
 
@@ -36,6 +37,9 @@ object AppModule {
 
     @Volatile
     private var repository: SongCoherenceRepository? = null
+
+    @Volatile
+    private var movementDetector: MovementDetector? = null
 
     fun getDeviceManager(context: Context, mode: DeviceMode = currentMode): HrDeviceManager {
         if (mode != currentMode && deviceManager != null) {
@@ -80,6 +84,14 @@ object AppModule {
         }
     }
 
+    private fun getMovementDetector(context: Context): MovementDetector {
+        return movementDetector ?: synchronized(this) {
+            movementDetector ?: MovementDetector(context.applicationContext).also {
+                movementDetector = it
+            }
+        }
+    }
+
     fun provideHomeViewModelFactory(context: Context): ViewModelProvider.Factory {
         return viewModelFactory {
             initializer {
@@ -95,7 +107,8 @@ object AppModule {
                 SessionViewModel(
                     deviceManagerProvider = { getDeviceManager(ctx) },
                     musicApiClient = getMusicApiClient(),
-                    repository = getRepository(ctx)
+                    repository = getRepository(ctx),
+                    movementDetector = getMovementDetector(ctx)
                 )
             }
         }
@@ -106,5 +119,7 @@ object AppModule {
         deviceManager = null
         musicApiClient?.close()
         musicApiClient = null
+        movementDetector?.stop()
+        movementDetector = null
     }
 }
