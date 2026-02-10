@@ -2,23 +2,24 @@
 
 ## Last Session
 
-- **Date:** 2026-02-10
-- **Summary:** Built YouTube Music backend (FastAPI + ytmusicapi) and wired full Android integration — Ktor HTTP client, SQLDelight database, SessionManager, SessionViewModel, and Session Screen UI
+- **Date:** 2026-02-11
+- **Summary:** Added automatic music detection via NotificationListenerService, fixed APK signing, and multiple rounds of on-device testing with UX fixes
 - **Key changes:**
-  - Created `hrvxo-music-backend/` — FastAPI backend with POST /search, POST /create-playlist, GET /health endpoints
-  - Deployed backend to Fly.io Sydney region (`https://hrvxo-music.fly.dev`)
-  - Fixed Fly.io crash: switched OAuth from JSON env var to base64 encoding (YTMUSIC_OAUTH_B64)
-  - Added Ktor 3.0.3 HTTP client with ContentNegotiation + kotlinx.serialization.json
-  - Added SQLDelight 2.0.2 local database for song-coherence tracking (song_coherence table)
-  - Created SessionManager: 15s settle-in, 60s minimum recording, per-song coherence tracking
-  - Created SessionViewModel: search, tag songs, end session, save to DB, create playlist from leaderboard
-  - Created SessionScreen UI with all 5 session phases (NOT_STARTED → ACTIVE_NO_SONG → ACTIVE_SETTLING → ACTIVE_RECORDING → ENDED)
-  - Added navigation: enum-based AppScreen (HOME, SESSION) switching in App.kt
-  - Added "Start Music Session" button on HomeScreen (CONNECTED state only)
-  - Replaced Spotify integration plan with YouTube Music (ytmusicapi via backend proxy)
-  - All 40 existing HRV tests unaffected
-- **Stopped at:** All YouTube Music integration code complete. Ready for on-device testing.
-- **Blockers:** None — backend deployed and app wired up
+  - Added MusicDetectionService (NotificationListenerService) — auto-detects YouTube Music track changes and play/pause state via MediaSessionManager
+  - Fixed release APK signing (unsigned APKs wouldn't install) — added debug signingConfig to release build type
+  - Bumped version to v1.1.0 (versionCode 2), created GitHub Release
+  - Fixed session auto-detecting already-playing songs — baseline track snapshot + `hasUserSelectedSong` flag ensures session always starts at song search
+  - Replaced "Collecting data ~30s" card with subtle "Analysing heart rate..." text on home screen
+  - Changed "Settling in" to "Calibrating" terminology
+  - Added 60s milestone notice during recording ("Valid reading collected. Continue for more accuracy...")
+  - Added movement/duration instructions to session start screen
+  - Made "Coherence Playlist Session" heading smaller (titleLarge) to fit one line
+  - Added auto-return to HrvXo after opening YouTube Music (1.5s delay + FLAG_ACTIVITY_REORDER_TO_FRONT)
+  - Added YTM pause on session end via MediaController.transportControls.pause()
+  - Added early-end message card when session ended before 60s with no valid songs
+  - Added ACTIVE_WAITING_PLAYBACK phase to session flow (6 phases total now)
+- **Stopped at:** All on-device feedback addressed. v1.1.0 released. Ready for next round of testing.
+- **Blockers:** YTM ads cannot be controlled from external apps — YTM Premium only
 
 ---
 
@@ -41,14 +42,19 @@
 - YouTube Music backend deployed at `https://hrvxo-music.fly.dev` (FastAPI + ytmusicapi)
 - Ktor HTTP client wired to backend (search songs, create playlists)
 - SQLDelight local database for song-coherence persistence
-- Session screen UI with 5 phase states and song search bottom sheet
+- Session screen UI with 6 phase states and song search bottom sheet
 - Coherence-based playlist generation from user's actual leaderboard data
 
+- Auto music detection via NotificationListenerService (track changes + play/pause)
+- Session pause YTM on end, auto-return to app after YTM launch
+- Early-end handling with user-friendly message
+- v1.1.0 released on GitHub with signed APK
+
 ### In Progress
-- On-device testing of full music session flow
+- On-device testing of latest UX fixes (v1.1.0)
 
 ### Known Bugs
-- None identified yet (needs physical device testing with Polar H10 + YouTube Music)
+- YTM ads play before songs — cannot be controlled externally (YTM Premium only)
 
 ---
 
@@ -75,6 +81,8 @@
     - [x] Per-song coherence result cards with validity indicator
     - [x] Session summary on End: songs analysed, average coherence, best song
     - [x] Manual song tagging (YouTube Music has no "now playing" API)
+    - [x] Auto music detection via NotificationListenerService (replaces manual-only tagging)
+    - [x] ACTIVE_WAITING_PLAYBACK phase for pending song detection
 4. [x] **Song-Coherence Database:**
     - [x] SQLDelight local database (song_coherence table)
     - [x] Store per-song coherence results after each valid reading
@@ -140,6 +148,15 @@
 - [x] Create SessionScreen UI with 5 session phases (2026-02-10)
 - [x] Add enum-based navigation (HOME ↔ SESSION) (2026-02-10)
 - [x] Wire MainActivity with SessionViewModel integration (2026-02-10)
+- [x] Add auto music detection via NotificationListenerService (2026-02-11)
+- [x] Fix release APK signing — add debug signingConfig to release build type (2026-02-11)
+- [x] Bump version to v1.1.0 and create GitHub Release (2026-02-11)
+- [x] Fix session auto-detecting already-playing songs — baseline snapshot + hasUserSelectedSong flag (2026-02-11)
+- [x] Replace "Collecting data ~30s" card with subtle "Analysing heart rate..." text (2026-02-11)
+- [x] Add 60s milestone notice and movement instructions to session screen (2026-02-11)
+- [x] Add auto-return to HrvXo after opening YouTube Music (2026-02-11)
+- [x] Add YTM pause on session end via MediaController (2026-02-11)
+- [x] Add early-end message card for sessions ended before 60s (2026-02-11)
 
 ---
 
@@ -169,6 +186,10 @@
 | Enum-based navigation | Simple state-driven screen switching; no nav library needed at this scale | 2026-02-10 |
 | 3 song minimum for playlist | MVP threshold; lower than original 10 to let users experience playlist creation faster | 2026-02-10 |
 | Leaderboard-based playlists | Primary generation always from user's actual coherence data, not genre assumptions | 2026-02-10 |
+| NotificationListenerService for auto-detection | YTM has no "now playing" API; MediaSessionManager provides track metadata and playback state | 2026-02-11 |
+| Baseline track snapshot on session start | Prevents auto-detecting already-playing song; only reacts to NEW tracks after user selects via search | 2026-02-11 |
+| Debug signingConfig for release builds | Proper signing with release keystore deferred; debug keystore allows APK installation for testing | 2026-02-11 |
+| Version bump per release | User requires GitHub Releases to be versioned — bump versionCode/versionName for each release | 2026-02-11 |
 
 ---
 
