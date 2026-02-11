@@ -3,6 +3,8 @@ package com.heartsyncradio.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -258,7 +260,7 @@ private fun NotStartedContent(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(32.dp)
+            modifier = Modifier.padding(32.dp).verticalScroll(rememberScrollState())
         ) {
             Text(
                 text = "Coherence Playlist Session",
@@ -321,19 +323,21 @@ private fun NotStartedContent(
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            Text(
-                text = "Requires YouTube Music app installed",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = onStartSession,
-                enabled = notificationListenerEnabled
-            ) {
-                Text("Start Session")
+                Text(
+                    text = "Requires YouTube Music app installed",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    text = "Requires YouTube Music app installed",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = onStartSession) {
+                    Text("Start Session")
+                }
             }
         }
     }
