@@ -70,6 +70,12 @@ kotlin {
             // Ktor engine (Android)
             implementation(libs.ktor.client.okhttp)
 
+            // Google Play Services (in-app location enable dialog)
+            implementation(libs.play.services.location)
+
+            // Fragment (required for ActivityResultContracts lint check)
+            implementation("androidx.fragment:fragment-ktx:1.8.5")
+
             // SQLDelight driver (Android)
             implementation(libs.sqldelight.android.driver)
         }
@@ -89,8 +95,8 @@ android {
         applicationId = "com.heartsyncradio"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.4.0"
+        versionCode = 8
+        versionName = "1.5.0"
     }
 
     packaging {

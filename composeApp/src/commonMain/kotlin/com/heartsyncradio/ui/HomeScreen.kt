@@ -55,6 +55,8 @@ fun HomeScreen(
     permissionsGranted: Boolean,
     hrvMetrics: HrvMetrics?,
     selectedDeviceMode: String?,
+    bluetoothEnabled: Boolean = true,
+    locationEnabled: Boolean = true,
     onSelectDeviceMode: (String) -> Unit,
     onChangeDeviceMode: () -> Unit,
     onStartScan: () -> Unit,
@@ -63,6 +65,8 @@ fun HomeScreen(
     onDisconnect: () -> Unit,
     onClearError: () -> Unit,
     onRequestPermissions: () -> Unit,
+    onRequestBluetooth: () -> Unit = {},
+    onRequestLocation: () -> Unit = {},
     onStartSession: () -> Unit = {}
 ) {
     Scaffold(
@@ -205,26 +209,7 @@ fun HomeScreen(
                 }
 
                 ConnectionState.DISCONNECTED -> {
-                    if (!permissionsGranted) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(32.dp)
-                            ) {
-                                Text(
-                                    text = "Bluetooth permissions are required to scan for heart rate sensors.",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = onRequestPermissions) {
-                                    Text("Grant Permissions")
-                                }
-                            }
-                        }
-                    } else if (selectedDeviceMode == null) {
+                    if (selectedDeviceMode == null) {
                         // Device type chooser
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -289,7 +274,9 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        // Scan UI — show selected device type with change option
+                        // Scan UI with pre-flight readiness checks
+                        val allReady = permissionsGranted && bluetoothEnabled && locationEnabled
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -305,13 +292,50 @@ fun HomeScreen(
                             }
                         }
 
+                        // Readiness warning card
+                        if (!allReady) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "Required to scan for devices:",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    if (!bluetoothEnabled) {
+                                        TextButton(onClick = onRequestBluetooth) {
+                                            Text("Enable Bluetooth")
+                                        }
+                                    }
+                                    if (!locationEnabled) {
+                                        TextButton(onClick = onRequestLocation) {
+                                            Text("Enable Location Services")
+                                        }
+                                    }
+                                    if (!permissionsGranted) {
+                                        TextButton(onClick = onRequestPermissions) {
+                                            Text("Grant BLE Permissions")
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Button(
-                                onClick = { if (isScanning) onStopScan() else onStartScan() }
+                                onClick = { if (isScanning) onStopScan() else onStartScan() },
+                                enabled = allReady || isScanning
                             ) {
                                 if (isScanning) {
                                     CircularProgressIndicator(

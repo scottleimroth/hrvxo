@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class SessionViewModel(
     private val deviceManagerProvider: () -> HrDeviceManager,
@@ -86,14 +87,18 @@ class SessionViewModel(
     private fun startMetricsCollection() {
         metricsCollectionJob?.cancel()
         metricsCollectionJob = viewModelScope.launch {
-            deviceManagerProvider().hrvMetrics.collect { metrics ->
-                if (metrics != null && sessionPhase.value in listOf(
-                        SessionPhase.ACTIVE_SETTLING,
-                        SessionPhase.ACTIVE_RECORDING
-                    )
-                ) {
-                    sessionManager.recordMetrics(metrics, System.currentTimeMillis())
+            try {
+                deviceManagerProvider().hrvMetrics.collect { metrics ->
+                    if (metrics != null && sessionPhase.value in listOf(
+                            SessionPhase.ACTIVE_SETTLING,
+                            SessionPhase.ACTIVE_RECORDING
+                        )
+                    ) {
+                        sessionManager.recordMetrics(metrics, System.currentTimeMillis())
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("SessionViewModel", "Metrics collection error", e)
             }
         }
     }

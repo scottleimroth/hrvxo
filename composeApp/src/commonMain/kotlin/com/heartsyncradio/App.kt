@@ -31,12 +31,16 @@ fun App(
     selectedDeviceMode: String?,
     onSelectDeviceMode: (String) -> Unit,
     onChangeDeviceMode: () -> Unit,
+    bluetoothEnabled: Boolean = true,
+    locationEnabled: Boolean = true,
     onStartScan: () -> Unit,
     onStopScan: () -> Unit,
     onConnectDevice: (String) -> Unit,
     onDisconnect: () -> Unit,
     onClearError: () -> Unit,
     onRequestPermissions: () -> Unit,
+    onRequestBluetooth: () -> Unit = {},
+    onRequestLocation: () -> Unit = {},
     // Session parameters
     sessionPhase: SessionPhase = SessionPhase.NOT_STARTED,
     sessionCurrentSong: TaggedSong? = null,
@@ -75,6 +79,8 @@ fun App(
                 permissionsGranted = permissionsGranted,
                 hrvMetrics = hrvMetrics,
                 selectedDeviceMode = selectedDeviceMode,
+                bluetoothEnabled = bluetoothEnabled,
+                locationEnabled = locationEnabled,
                 onSelectDeviceMode = onSelectDeviceMode,
                 onChangeDeviceMode = onChangeDeviceMode,
                 onStartScan = onStartScan,
@@ -83,6 +89,8 @@ fun App(
                 onDisconnect = onDisconnect,
                 onClearError = onClearError,
                 onRequestPermissions = onRequestPermissions,
+                onRequestBluetooth = onRequestBluetooth,
+                onRequestLocation = onRequestLocation,
                 onStartSession = { onNavigate(AppScreen.SESSION) }
             )
             AppScreen.SESSION -> SessionScreen(

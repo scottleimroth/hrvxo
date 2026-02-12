@@ -1,9 +1,13 @@
 package com.heartsyncradio
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Intent
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -12,13 +16,20 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.app.NotificationCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.location.Priority
 import com.heartsyncradio.di.AppModule
 import com.heartsyncradio.di.DeviceMode
 import com.heartsyncradio.music.MusicDetectionService
@@ -33,6 +44,8 @@ class MainActivity : ComponentActivity() {
     private var currentScreen by mutableStateOf(AppScreen.HOME)
     private var notificationListenerEnabled by mutableStateOf(false)
     private var overlayPermissionGranted by mutableStateOf(false)
+    private var bluetoothEnabled by mutableStateOf(false)
+    private var locationEnabled by mutableStateOf(false)
 
     companion object {
         private const val RETURN_CHANNEL_ID = "hrvxo_return"
@@ -45,6 +58,19 @@ class MainActivity : ComponentActivity() {
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         viewModel.onPermissionsResult(allGranted)
+        checkReadiness()
+    }
+
+    private val bluetoothEnableLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        checkReadiness()
+    }
+
+    private val locationSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { _ ->
+        checkReadiness()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,10 +88,7 @@ class MainActivity : ComponentActivity() {
             AppModule.provideSessionViewModelFactory(this)
         )[SessionViewModel::class.java]
 
-        if (BlePermissionHandler.hasAllPermissions(this)) {
-            viewModel.onPermissionsResult(true)
-        }
-
+        checkReadiness()
         notificationListenerEnabled = MusicDetectionService.isEnabled(this)
         overlayPermissionGranted = Settings.canDrawOverlays(this)
 
@@ -109,6 +132,8 @@ class MainActivity : ComponentActivity() {
                 permissionsGranted = permissionsGranted,
                 hrvMetrics = hrvMetrics,
                 selectedDeviceMode = selectedDeviceMode,
+                bluetoothEnabled = bluetoothEnabled,
+                locationEnabled = locationEnabled,
                 onSelectDeviceMode = { mode ->
                     val deviceMode = when (mode) {
                         "polar" -> DeviceMode.POLAR
@@ -130,6 +155,8 @@ class MainActivity : ComponentActivity() {
                         BlePermissionHandler.requiredPermissions().toTypedArray()
                     )
                 },
+                onRequestBluetooth = ::requestBluetoothEnable,
+                onRequestLocation = ::requestLocationEnable,
                 // Session parameters
                 sessionPhase = sessionPhase,
                 sessionCurrentSong = sessionCurrentSong,
@@ -190,8 +217,49 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         cancelReturnNotification()
+        checkReadiness()
         notificationListenerEnabled = MusicDetectionService.isEnabled(this)
         overlayPermissionGranted = Settings.canDrawOverlays(this)
+    }
+
+    private fun checkReadiness() {
+        val btManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+        bluetoothEnabled = btManager.adapter?.isEnabled == true
+        locationEnabled = isLocationEnabled()
+        viewModel.onPermissionsResult(BlePermissionHandler.hasAllPermissions(this))
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val lm = getSystemService(LOCATION_SERVICE) as LocationManager
+        return LocationManagerCompat.isLocationEnabled(lm)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestBluetoothEnable() {
+        try {
+            bluetoothEnableLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        } catch (_: SecurityException) {
+            // Android 12+ needs BLUETOOTH_CONNECT — request permissions first
+            permissionLauncher.launch(BlePermissionHandler.requiredPermissions().toTypedArray())
+        }
+    }
+
+    private fun requestLocationEnable() {
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_LOW_POWER, 10000L
+        ).build()
+        val settingsRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .build()
+        LocationServices.getSettingsClient(this)
+            .checkLocationSettings(settingsRequest)
+            .addOnFailureListener { exception ->
+                if (exception is ResolvableApiException) {
+                    locationSettingsLauncher.launch(
+                        IntentSenderRequest.Builder(exception.resolution.intentSender).build()
+                    )
+                }
+            }
     }
 
     private fun createReturnNotificationChannel() {

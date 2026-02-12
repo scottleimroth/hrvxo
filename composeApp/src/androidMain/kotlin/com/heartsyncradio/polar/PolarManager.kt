@@ -76,7 +76,17 @@ class PolarManager(context: Context) : HrDeviceManager {
                 Log.d(TAG, "Device connected: ${polarDeviceInfo.deviceId}")
                 _connectionState.value = ConnectionState.CONNECTED
                 _connectedDeviceId.value = polarDeviceInfo.deviceId
-                startHrStreaming(polarDeviceInfo.deviceId)
+                // Don't start HR streaming here — wait for bleSdkFeatureReady
+            }
+
+            override fun bleSdkFeatureReady(
+                identifier: String,
+                feature: PolarBleApi.PolarBleSdkFeature
+            ) {
+                Log.d(TAG, "SDK feature ready: $feature for $identifier")
+                if (feature == PolarBleApi.PolarBleSdkFeature.FEATURE_HR) {
+                    startHrStreaming(identifier)
+                }
             }
 
             override fun deviceConnecting(polarDeviceInfo: SdkPolarDeviceInfo) {
