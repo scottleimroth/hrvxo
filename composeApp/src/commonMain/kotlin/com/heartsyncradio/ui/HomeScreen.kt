@@ -14,10 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
@@ -75,12 +72,10 @@ fun HomeScreen(
     onRequestBluetooth: () -> Unit = {},
     onRequestLocation: () -> Unit = {},
     onStartSession: () -> Unit = {},
-    onViewHistory: () -> Unit = {},
     isDarkTheme: Boolean = false,
     onToggleDarkTheme: () -> Unit = {},
-    onViewInsights: () -> Unit = {},
-    onViewLeaderboard: () -> Unit = {},
-    onViewAbout: () -> Unit = {}
+    onViewAbout: () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -99,30 +94,13 @@ fun HomeScreen(
                             contentDescription = if (isDarkTheme) "Light mode" else "Dark mode"
                         )
                     }
-                    IconButton(onClick = onViewLeaderboard) {
-                        Icon(
-                            imageVector = Icons.Default.EmojiEvents,
-                            contentDescription = "Leaderboard"
-                        )
-                    }
-                    IconButton(onClick = onViewInsights) {
-                        Icon(
-                            imageVector = Icons.Default.BarChart,
-                            contentDescription = "Insights"
-                        )
-                    }
-                    IconButton(onClick = onViewHistory) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = "Session History"
-                        )
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
-        }
+        },
+        bottomBar = bottomBar
     ) { paddingValues ->
         Column(
             modifier = Modifier

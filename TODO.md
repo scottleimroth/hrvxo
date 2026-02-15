@@ -3,25 +3,15 @@
 ## Last Session
 
 - **Date:** 2026-02-15
-- **Summary:** Massive feature batch: dark mode, insights, streaks, onboarding, re-listen, leaderboard, history with delete, about screen, CSV export
+- **Summary:** Bottom navigation bar replacing cramped top bar icons + README overhaul
 - **Key changes:**
-  - Session History with expand/collapse + delete session + delete all data (confirmation dialogs)
-  - CSV export via ShareSheet (FileProvider)
-  - Cold-start suggestion chips for new users (< 3 songs)
-  - Dark mode with persistent toggle, custom teal/cyan HrvXoTheme
-  - Insights screen: stats grid, Canvas coherence trend chart, best song/artist, listen time
-  - Streak tracking: current + longest consecutive session days
-  - 3-page onboarding flow (Welcome, Sensor Setup, Music Setup) with HorizontalPager
-  - Re-listen mode: top coherence songs shown on session screen for quick replay
-  - Leaderboard screen: all songs ranked by coherence with rank badges and listen counts
-  - About screen: app description, version, how-it-works, privacy info
-  - Added `movement_detected` column with migration
-  - New screens: LeaderboardScreen, AboutScreen, OnboardingScreen
-  - New ViewModels: HistoryViewModel, InsightsViewModel
-  - Added `ONBOARDING`, `HISTORY`, `INSIGHTS`, `LEADERBOARD`, `ABOUT` to AppScreen enum
-  - SQL: deleteSession, deleteAllData queries
-  - Material Icons Extended, version bump to v1.6.0
-- **Stopped at:** All features built and building. Ready for commit, release, and device testing.
+  - Replaced 5 cramped top bar action icons (Info, Theme, Leaderboard, Insights, History) with Material3 NavigationBar
+  - Bottom nav has 4 tabs: Home, Insights, Leaderboard, History
+  - Removed back arrows from Insights, Leaderboard, History screens (they're primary nav destinations now)
+  - Each screen receives bottomBar composable via parameter (no nested Scaffolds)
+  - Kept About accessible from Home top bar info icon + Theme toggle in top bar
+  - Comprehensive README rewrite with all v1.6.0 features documented
+- **Stopped at:** Bottom nav built and building. Ready for commit and release.
 - **Blockers:** None
 
 ---
@@ -190,6 +180,8 @@
 - [x] About screen with version, how-it-works, privacy info (2026-02-15)
 - [x] Delete session + delete all data in History with confirmation dialogs (2026-02-15)
 - [x] SQL queries: deleteSession, deleteAllData (2026-02-15)
+- [x] Bottom navigation bar: Home, Insights, Leaderboard, History tabs (2026-02-15)
+- [x] README overhaul with all v1.6.0 features (2026-02-15)
 
 ---
 
@@ -239,6 +231,8 @@
 | Leaderboard as dedicated screen | Separate from session re-listen cards; shows full ranked list with rank badges (top 3 highlighted) | 2026-02-15 |
 | AlertDialog for destructive actions | Delete session/all requires user confirmation; prevents accidental data loss | 2026-02-15 |
 | About screen with hardcoded version | Simple approach; version could be read from BuildConfig in future | 2026-02-15 |
+| Bottom NavigationBar with 4 tabs | Replaced 5 cramped top bar icons; bottomBar passed to each screen's Scaffold | 2026-02-15 |
+| About kept in top bar, not bottom nav | About is not a primary destination; info icon + theme toggle in Home top bar | 2026-02-15 |
 
 ---
 

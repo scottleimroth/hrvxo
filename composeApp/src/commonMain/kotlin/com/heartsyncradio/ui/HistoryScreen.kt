@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Share
@@ -55,7 +54,8 @@ fun HistoryScreen(
     onExportCsv: () -> Unit,
     onDeleteSession: (Long) -> Unit = {},
     onDeleteAllData: () -> Unit = {},
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    bottomBar: @Composable () -> Unit = {}
 ) {
     var showDeleteAllDialog by remember { mutableStateOf(false) }
     var sessionToDelete by remember { mutableStateOf<Long?>(null) }
@@ -63,14 +63,6 @@ fun HistoryScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Session History") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
                 actions = {
                     IconButton(
                         onClick = { showDeleteAllDialog = true },
@@ -95,7 +87,8 @@ fun HistoryScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
-        }
+        },
+        bottomBar = bottomBar
     ) { paddingValues ->
         if (sessions.isEmpty()) {
             Box(

@@ -1,5 +1,14 @@
 package com.heartsyncradio
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.heartsyncradio.ui.theme.HrvXoTheme
 import com.heartsyncradio.hrv.HrvMetrics
@@ -101,6 +110,35 @@ fun App(
     onOnboardingComplete: () -> Unit = {}
 ) {
     HrvXoTheme(darkTheme = isDarkTheme) {
+        val bottomBar: @Composable () -> Unit = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = currentScreen == AppScreen.HOME,
+                    onClick = { onNavigate(AppScreen.HOME) },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Home") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == AppScreen.INSIGHTS,
+                    onClick = onViewInsights,
+                    icon = { Icon(Icons.Default.BarChart, contentDescription = "Insights") },
+                    label = { Text("Insights") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == AppScreen.LEADERBOARD,
+                    onClick = onViewLeaderboard,
+                    icon = { Icon(Icons.Default.EmojiEvents, contentDescription = "Leaderboard") },
+                    label = { Text("Leaderboard") }
+                )
+                NavigationBarItem(
+                    selected = currentScreen == AppScreen.HISTORY,
+                    onClick = onViewHistory,
+                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "History") },
+                    label = { Text("History") }
+                )
+            }
+        }
+
         when (currentScreen) {
             AppScreen.ONBOARDING -> OnboardingScreen(
                 onComplete = onOnboardingComplete
@@ -128,16 +166,15 @@ fun App(
                 onRequestBluetooth = onRequestBluetooth,
                 onRequestLocation = onRequestLocation,
                 onStartSession = { onNavigate(AppScreen.SESSION) },
-                onViewHistory = onViewHistory,
                 isDarkTheme = isDarkTheme,
                 onToggleDarkTheme = onToggleDarkTheme,
-                onViewInsights = onViewInsights,
-                onViewLeaderboard = onViewLeaderboard,
-                onViewAbout = onViewAbout
+                onViewAbout = onViewAbout,
+                bottomBar = bottomBar
             )
             AppScreen.INSIGHTS -> InsightsScreen(
                 insights = insights,
-                onBack = { onNavigate(AppScreen.HOME) }
+                onBack = { onNavigate(AppScreen.HOME) },
+                bottomBar = bottomBar
             )
             AppScreen.HISTORY -> HistoryScreen(
                 sessions = historySessions,
@@ -148,11 +185,13 @@ fun App(
                 onExportCsv = onExportCsv,
                 onDeleteSession = onDeleteSession,
                 onDeleteAllData = onDeleteAllData,
-                onBack = { onNavigate(AppScreen.HOME) }
+                onBack = { onNavigate(AppScreen.HOME) },
+                bottomBar = bottomBar
             )
             AppScreen.LEADERBOARD -> LeaderboardScreen(
                 songs = topSongs,
-                onBack = { onNavigate(AppScreen.HOME) }
+                onBack = { onNavigate(AppScreen.HOME) },
+                bottomBar = bottomBar
             )
             AppScreen.ABOUT -> AboutScreen(
                 versionName = versionName,

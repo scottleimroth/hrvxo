@@ -1,8 +1,8 @@
 # HrvXo
 
-[![Download APK](https://img.shields.io/badge/Download-APK-green?style=for-the-badge)](https://github.com/scottleimroth/hrvxo/releases/latest/download/HrvXo-v1.5.0.apk)
+[![Download APK](https://img.shields.io/badge/DOWNLOAD-APK-green?style=for-the-badge)](https://github.com/scottleimroth/hrvxo/releases/latest)
 
-A biofeedback-driven music app that uses your Polar H10 heart rate monitor to generate YouTube Music playlists based on cardiac coherence.
+Discover which music puts your heart in sync. HrvXo measures your heart rate variability (HRV) through a Bluetooth chest strap while you listen to music on YouTube Music, scoring each song by how it affects your autonomic nervous system.
 
 ---
 
@@ -10,29 +10,40 @@ A biofeedback-driven music app that uses your Polar H10 heart rate monitor to ge
 
 | Platform | How to Get It |
 |----------|---------------|
-| Android | [Download APK](https://github.com/scottleimroth/hrvxo/releases/latest/download/HrvXo-v1.4.0.apk) — requires Polar H10 chest strap + Bluetooth |
-
-## Overview
-
-HrvXo connects to a Polar H10 chest strap via Bluetooth LE, processes real-time heart rate variability (HRV) data, and calculates a coherence score using the HeartMath algorithm. The goal is to identify which songs produce the highest physiological coherence and build personalised playlists from that data.
+| Android | [Download APK](https://github.com/scottleimroth/hrvxo/releases/latest) — requires BLE heart rate chest strap + YouTube Music |
 
 ## Features
 
-- **Polar H10 BLE Integration** — Scan, connect, and stream live heart rate + RR intervals
-- **HRV Processing Pipeline** — Artifact correction (cubic spline), RMSSD, FFT spectral analysis
+### Core
+- **BLE Heart Rate Integration** — Polar H10 (via SDK) or any standard BLE HR chest strap
+- **HRV Processing** — Artifact correction (cubic spline), RMSSD, FFT spectral analysis
 - **Coherence Scoring** — HeartMath algorithm with Welch's method PSD estimation
 - **Real-time Display** — Live BPM, coherence %, RMSSD, and RR intervals
-- **Battery Monitoring** — Shows Polar H10 battery level while connected
-- **YouTube Music Integration** — Seamless playlist generation using ytmusicapi
+- **YouTube Music Integration** — Search songs, auto-detect track changes, generate coherence playlists
+- **Movement Detection** — Accelerometer + HR anomaly flagging for reliable readings
+
+### Session & Data
+- **Session History** — Browse past sessions, expand to see per-song results, delete individual sessions or all data
+- **CSV Export** — Share session data via ShareSheet for external analysis
+- **Leaderboard** — All songs ranked by coherence score with listen counts and rank badges
+- **Insights Dashboard** — Stats grid, coherence trend chart, best song/artist, streak tracking, total listen time
+- **Coherence Playlists** — Auto-generate YouTube Music playlists from your top-performing songs
+
+### UX
+- **Bottom Navigation** — Home, Insights, Leaderboard, History tabs for easy navigation
+- **Dark Mode** — Teal/cyan themed dark mode with persistent toggle
+- **Onboarding** — 3-page swipeable intro for first-time users
+- **Cold-Start Suggestions** — Curated search queries for users with zero data
+- **Re-Listen Mode** — Quick replay of top coherence songs during active sessions
 
 ## Getting Started
 
 ### Prerequisites
 
 - Android 8.0+ (API 26)
-- Polar H10 chest strap
+- BLE heart rate chest strap (Polar H10 recommended)
 - Bluetooth enabled on device
-- [YouTube Music](https://play.google.com/store/apps/details?id=com.google.android.apps.youtube.music) app installed (for music session playback)
+- [YouTube Music](https://play.google.com/store/apps/details?id=com.google.android.apps.youtube.music) app installed
 
 ### Installation
 
@@ -40,8 +51,9 @@ Download the latest APK from the badge above, or from the [Releases page](https:
 
 1. Open the APK on your Android device
 2. Allow "Install from unknown sources" when prompted
-3. Open the app and grant Bluetooth permissions
-4. Wet your Polar H10 strap, put it on, and tap "Scan"
+3. Open the app and complete the onboarding
+4. Wet your chest strap, put it on, and connect via Bluetooth
+5. Start a music session and tag songs as you listen
 
 ### Building from Source
 
@@ -59,14 +71,18 @@ APK output: `composeApp/build/outputs/apk/debug/composeApp-debug.apk`
 hrvxo/
 ├── composeApp/src/
 │   ├── commonMain/         # Cross-platform code
-│   │   └── kotlin/com/hrvxo/
+│   │   └── kotlin/com/heartsyncradio/
 │   │       ├── hrv/        # HRV processing (artifact detection, FFT, coherence)
 │   │       ├── model/      # Data classes (HeartRateData, ConnectionState)
-│   │       └── ui/         # Compose UI (HomeScreen, HeartRateDisplay)
+│   │       ├── music/      # Session management, song repository
+│   │       ├── ui/         # Compose UI screens and components
+│   │       └── db/         # SQLDelight schema and migrations
 │   ├── androidMain/        # Android-specific code
-│   │   └── kotlin/com/hrvxo/
+│   │   └── kotlin/com/heartsyncradio/
 │   │       ├── polar/      # Polar BLE SDK integration
-│   │       ├── viewmodel/  # Android ViewModels
+│   │       ├── ble/        # Generic BLE HR manager
+│   │       ├── viewmodel/  # Android ViewModels (Home, Session, History, Insights)
+│   │       ├── di/         # Manual dependency injection
 │   │       └── permission/ # BLE permission handling
 │   └── commonTest/         # Cross-platform tests (40 tests)
 ├── gradle/
@@ -87,21 +103,21 @@ hrvxo/
 ### Mobile App
 - **Kotlin Multiplatform** with Compose Multiplatform
 - **Polar BLE SDK** 6.14.0 for heart rate sensor communication
-- **RxJava3** bridged to Kotlin StateFlows
-- **AndroidX Lifecycle** for ViewModel integration
-- **Material3** design system
+- **SQLDelight** for local song-coherence database
+- **Material3** with custom dark/light themes
+- **AndroidX Lifecycle** + ViewModels with StateFlow
 
 ### Backend
 - **Python FastAPI** hosted on Fly.io
-- **ytmusicapi** for YouTube Music playlist generation
-- **RESTful API** for coherence-based music recommendations
+- **ytmusicapi** for YouTube Music search and playlist creation
 
 ## Roadmap
 
+- [x] BLE heart rate integration (Polar H10 + generic BLE)
+- [x] HRV processing with HeartMath coherence scoring
 - [x] YouTube Music integration and playlist creation
-- [x] Session screen with real-time coherence tracking
-- [x] Local data storage (SQLDelight) for song-coherence tracking
-- [x] Coherence playlist generation from leaderboard data
-- [x] Movement detection (accelerometer + HR anomaly)
+- [x] Session history, CSV export, leaderboard
+- [x] Insights dashboard with streaks and trend charts
+- [x] Dark mode, onboarding, bottom navigation
+- [ ] Genre/tempo analysis: correlate audio features with coherence
 - [ ] iOS support (KMP structure in place)
-- [ ] Historical session trends and insights
