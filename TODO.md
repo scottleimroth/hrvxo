@@ -2,16 +2,19 @@
 
 ## Last Session
 
-- **Date:** 2026-02-15
-- **Summary:** Bottom navigation bar replacing cramped top bar icons + README overhaul
+- **Date:** 2026-02-16
+- **Summary:** v1.7.0 — animated coherence ring, recording progress, celebration messages, share results, color coding, home stats
 - **Key changes:**
-  - Replaced 5 cramped top bar action icons (Info, Theme, Leaderboard, Insights, History) with Material3 NavigationBar
-  - Bottom nav has 4 tabs: Home, Insights, Leaderboard, History
-  - Removed back arrows from Insights, Leaderboard, History screens (they're primary nav destinations now)
-  - Each screen receives bottomBar composable via parameter (no nested Scaffolds)
-  - Kept About accessible from Home top bar info icon + Theme toggle in top bar
-  - Comprehensive README rewrite with all v1.6.0 features documented
-- **Stopped at:** Bottom nav built and building. Ready for commit and release.
+  - Animated circular coherence ring on session screen (Canvas + animateFloatAsState)
+  - Color-coded coherence scores across all screens (green/amber/red)
+  - Recording progress bar during 60s minimum with coherence-colored fill
+  - Session celebration messages based on avg coherence performance
+  - Quick stats dashboard on HomeScreen (streak, avg coherence, total songs)
+  - Share button on session summary via Android ShareSheet
+  - Insights auto-refresh when returning from session to home
+  - BPM display alongside RMSSD in session coherence header
+  - Version bump to v1.7.0 (versionCode 10)
+- **Stopped at:** All features built and pushed. Continuing to build.
 - **Blockers:** None
 
 ---
@@ -182,6 +185,15 @@
 - [x] SQL queries: deleteSession, deleteAllData (2026-02-15)
 - [x] Bottom navigation bar: Home, Insights, Leaderboard, History tabs (2026-02-15)
 - [x] README overhaul with all v1.6.0 features (2026-02-15)
+- [x] Color-coded coherence scores across all screens (green/amber/red) (2026-02-16)
+- [x] Quick stats dashboard on HomeScreen (streak, avg, songs) (2026-02-16)
+- [x] Share session results button via Android ShareSheet (2026-02-16)
+- [x] Animated coherence ring on session screen with Canvas drawing (2026-02-16)
+- [x] Recording progress bar with 60s countdown (2026-02-16)
+- [x] Session celebration messages based on performance (2026-02-16)
+- [x] Insights auto-refresh when returning from session (2026-02-16)
+- [x] BPM display in session coherence header (2026-02-16)
+- [x] Version bump to v1.7.0 (versionCode 10) (2026-02-16)
 
 ---
 
@@ -233,6 +245,13 @@
 | About screen with hardcoded version | Simple approach; version could be read from BuildConfig in future | 2026-02-15 |
 | Bottom NavigationBar with 4 tabs | Replaced 5 cramped top bar icons; bottomBar passed to each screen's Scaffold | 2026-02-15 |
 | About kept in top bar, not bottom nav | About is not a primary destination; info icon + theme toggle in Home top bar | 2026-02-15 |
+| Coherence color utility (CoherenceColor.kt) | Green (60%+), amber (30-60%), red (<30%); Material colors work on light/dark | 2026-02-16 |
+| Quick stats on HomeScreen from InsightsViewModel | Insights loads in init{} so data is ready immediately; no extra fetch needed | 2026-02-16 |
+| Share text summary via ACTION_SEND | Simple text share avoids image generation complexity; includes best song + avg | 2026-02-16 |
+| Animated coherence ring (Canvas) | animateFloatAsState + animateColorAsState for smooth 600ms transitions | 2026-02-16 |
+| Recording progress bar colored by coherence | LinearProgressIndicator fills over 60s; color matches current coherence level | 2026-02-16 |
+| Session celebration messages | Dynamic text based on avg coherence thresholds; colored card with coherenceColor | 2026-02-16 |
+| onRefreshInsights on session end | Ensures home dashboard stats update immediately after returning from a session | 2026-02-16 |
 
 ---
 

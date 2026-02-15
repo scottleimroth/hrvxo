@@ -802,7 +802,31 @@ private fun EndedContent(
                 }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        // Celebration message based on performance
+        if (validResults.isNotEmpty()) {
+            val message = when {
+                avgCoherence >= 0.7 -> "Excellent session! Your heart was in harmony."
+                avgCoherence >= 0.5 -> "Great session! Strong coherence overall."
+                avgCoherence >= 0.3 -> "Good session. Your data is building nicely."
+                else -> "Session logged. Try slower, ambient music for higher coherence."
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = coherenceColor(avgCoherence).copy(alpha = 0.15f)
+                )
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = coherenceColor(avgCoherence),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         if (validResults.isEmpty() && sessionResults.isEmpty()) {
             // No songs recorded at all — early end

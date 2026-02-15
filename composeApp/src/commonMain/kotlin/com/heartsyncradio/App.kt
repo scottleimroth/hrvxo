@@ -102,6 +102,7 @@ fun App(
     // Insights
     insights: InsightsUi = InsightsUi(),
     onViewInsights: () -> Unit = {},
+    onRefreshInsights: () -> Unit = {},
     // Quick stats for home
     quickStatStreak: Int = 0,
     quickStatAvgCoherence: Double = 0.0,
@@ -235,6 +236,7 @@ fun App(
                 onShareResults = onShareResults,
                 onBack = {
                     onResetSession()
+                    onRefreshInsights()
                     onNavigate(AppScreen.HOME)
                 }
             )

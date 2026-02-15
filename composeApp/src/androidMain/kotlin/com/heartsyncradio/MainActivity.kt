@@ -333,6 +333,7 @@ class MainActivity : ComponentActivity() {
                     insightsViewModel.refresh()
                     currentScreen = AppScreen.INSIGHTS
                 },
+                onRefreshInsights = { insightsViewModel.refresh() },
                 // Quick stats for home
                 quickStatStreak = insightsUi.currentStreak,
                 quickStatAvgCoherence = insightsUi.overallAvgCoherence,
@@ -340,7 +341,7 @@ class MainActivity : ComponentActivity() {
                 // Leaderboard
                 onViewLeaderboard = { currentScreen = AppScreen.LEADERBOARD },
                 // About
-                versionName = "1.6.0",
+                versionName = "1.7.0",
                 onViewAbout = { currentScreen = AppScreen.ABOUT },
                 // Onboarding
                 onOnboardingComplete = {
