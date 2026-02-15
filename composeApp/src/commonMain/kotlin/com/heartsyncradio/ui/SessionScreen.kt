@@ -1,5 +1,9 @@
 package com.heartsyncradio.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -44,6 +49,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -314,16 +323,31 @@ fun SessionScreen(
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     if (recordingDurationSec < SessionManager_MIN_RECORDING_SEC) {
+                        val progress = recordingDurationSec.toFloat() / SessionManager_MIN_RECORDING_SEC
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = coherenceColor(hrvMetrics?.coherenceScore ?: 0.0),
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Stay still — ${SessionManager_MIN_RECORDING_SEC - recordingDurationSec}s until valid reading",
+                            text = "${SessionManager_MIN_RECORDING_SEC - recordingDurationSec}s until valid reading",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
+                        LinearProgressIndicator(
+                            progress = { 1f },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = coherenceColor(hrvMetrics?.coherenceScore ?: 0.0),
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Valid reading collected. Continue for more accuracy, or end session.",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
+                            color = coherenceColor(hrvMetrics?.coherenceScore ?: 0.6)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -548,6 +572,17 @@ private fun CalibratingNotice() {
 
 @Composable
 private fun CoherenceHeader(hrvMetrics: HrvMetrics?) {
+    val targetProgress = hrvMetrics?.coherenceScore?.toFloat()?.coerceIn(0f, 1f) ?: 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(durationMillis = 600)
+    )
+    val defaultColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val ringColor by animateColorAsState(
+        targetValue = if (hrvMetrics != null) coherenceColor(hrvMetrics.coherenceScore) else defaultColor,
+        animationSpec = tween(durationMillis = 600)
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -559,30 +594,71 @@ private fun CoherenceHeader(hrvMetrics: HrvMetrics?) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "Coherence",
-                    style = MaterialTheme.typography.labelMedium
-                )
+            // Animated coherence ring
+            Box(
+                modifier = Modifier.size(80.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val strokeWidth = 8f
+                    val radius = (size.minDimension - strokeWidth) / 2
+                    val topLeft = Offset(
+                        (size.width - radius * 2) / 2,
+                        (size.height - radius * 2) / 2
+                    )
+
+                    // Background track
+                    drawCircle(
+                        color = ringColor.copy(alpha = 0.15f),
+                        radius = radius,
+                        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                    )
+
+                    // Progress arc
+                    if (animatedProgress > 0f) {
+                        drawArc(
+                            color = ringColor,
+                            startAngle = -90f,
+                            sweepAngle = animatedProgress * 360f,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                            topLeft = topLeft,
+                            size = Size(radius * 2, radius * 2)
+                        )
+                    }
+                }
                 Text(
                     text = if (hrvMetrics != null)
                         "${(hrvMetrics.coherenceScore * 100).toInt()}%"
                     else "---",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (hrvMetrics != null) coherenceColor(hrvMetrics.coherenceScore)
-                    else MaterialTheme.colorScheme.onSurface
+                    color = ringColor
                 )
             }
+
             if (hrvMetrics != null) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "RMSSD",
-                        style = MaterialTheme.typography.labelSmall
+                        text = "${hrvMetrics.meanHr.toInt()}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
+                        text = "BPM",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
                         text = "${hrvMetrics.rmssd.toInt()} ms",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "RMSSD",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
