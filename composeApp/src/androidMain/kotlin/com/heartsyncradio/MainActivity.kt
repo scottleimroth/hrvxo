@@ -304,6 +304,13 @@ class MainActivity : ComponentActivity() {
                     )
                 },
                 topSongs = topSongsUi,
+                onShareResults = { text ->
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, text)
+                    }
+                    startActivity(Intent.createChooser(intent, "Share Session Results"))
+                },
                 // History parameters
                 historySessions = historySessionsUi,
                 expandedSessionDates = historyExpandedSongsUi.keys,
@@ -326,6 +333,10 @@ class MainActivity : ComponentActivity() {
                     insightsViewModel.refresh()
                     currentScreen = AppScreen.INSIGHTS
                 },
+                // Quick stats for home
+                quickStatStreak = insightsUi.currentStreak,
+                quickStatAvgCoherence = insightsUi.overallAvgCoherence,
+                quickStatTotalSongs = insightsUi.uniqueSongs,
                 // Leaderboard
                 onViewLeaderboard = { currentScreen = AppScreen.LEADERBOARD },
                 // About

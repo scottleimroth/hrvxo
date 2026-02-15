@@ -143,6 +143,7 @@ private fun StatsGrid(insights: InsightsUi) {
         StatCard(
             label = "Avg Coherence",
             value = "${(insights.overallAvgCoherence * 100).toInt()}%",
+            valueColor = coherenceColor(insights.overallAvgCoherence),
             modifier = Modifier.weight(1f)
         )
         StatCard(
@@ -162,7 +163,8 @@ private fun StatsGrid(insights: InsightsUi) {
 private fun StatCard(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueColor: androidx.compose.ui.graphics.Color? = null
 ) {
     Card(
         modifier = modifier,
@@ -178,7 +180,7 @@ private fun StatCard(
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = valueColor ?: MaterialTheme.colorScheme.primary
             )
             Text(
                 text = label,

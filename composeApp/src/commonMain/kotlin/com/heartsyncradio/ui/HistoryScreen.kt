@@ -208,7 +208,7 @@ private fun SessionHistoryCard(
                         text = "${(session.avgCoherence * 100).toInt()}%",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = coherenceColor(session.avgCoherence)
                     )
                     Text(
                         text = "avg coherence",
@@ -308,7 +308,7 @@ private fun HistorySongRow(song: HistorySongUi) {
             text = "${(song.avgCoherence * 100).toInt()}%",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = coherenceColor(song.avgCoherence)
         )
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.heartsyncradio.music.SongSessionResult
+import com.heartsyncradio.ui.coherenceColor
 
 @Composable
 fun SongResultCard(result: SongSessionResult) {
@@ -81,7 +82,7 @@ fun SongResultCard(result: SongSessionResult) {
                 text = "$coherencePercent%",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (result.isValid) MaterialTheme.colorScheme.primary
+                color = if (result.isValid) coherenceColor(result.avgCoherence)
                 else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -159,7 +159,7 @@ private fun LeaderboardItem(rank: Int, song: TopSongUi) {
                     text = "${(song.score * 100).toInt()}%",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = coherenceColor(song.score)
                 )
                 Text(
                     text = "${song.listenCount} listen${if (song.listenCount != 1L) "s" else ""}",

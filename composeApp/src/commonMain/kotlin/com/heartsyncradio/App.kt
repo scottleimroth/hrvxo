@@ -84,6 +84,7 @@ fun App(
     onClearSearchError: () -> Unit = {},
     onRequestNotificationListener: () -> Unit = {},
     onRequestOverlayPermission: () -> Unit = {},
+    onShareResults: (String) -> Unit = {},
     topSongs: List<TopSongUi> = emptyList(),
     // History parameters
     historySessions: List<SessionSummaryUi> = emptyList(),
@@ -101,6 +102,10 @@ fun App(
     // Insights
     insights: InsightsUi = InsightsUi(),
     onViewInsights: () -> Unit = {},
+    // Quick stats for home
+    quickStatStreak: Int = 0,
+    quickStatAvgCoherence: Double = 0.0,
+    quickStatTotalSongs: Long = 0,
     // Leaderboard
     onViewLeaderboard: () -> Unit = {},
     // About
@@ -169,7 +174,10 @@ fun App(
                 isDarkTheme = isDarkTheme,
                 onToggleDarkTheme = onToggleDarkTheme,
                 onViewAbout = onViewAbout,
-                bottomBar = bottomBar
+                bottomBar = bottomBar,
+                quickStatStreak = quickStatStreak,
+                quickStatAvgCoherence = quickStatAvgCoherence,
+                quickStatTotalSongs = quickStatTotalSongs
             )
             AppScreen.INSIGHTS -> InsightsScreen(
                 insights = insights,
@@ -224,6 +232,7 @@ fun App(
                 onRequestNotificationListener = onRequestNotificationListener,
                 onRequestOverlayPermission = onRequestOverlayPermission,
                 topSongs = topSongs,
+                onShareResults = onShareResults,
                 onBack = {
                     onResetSession()
                     onNavigate(AppScreen.HOME)

@@ -39,6 +39,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.heartsyncradio.hrv.HrvMetrics
 import com.heartsyncradio.model.ConnectionState
@@ -75,7 +77,10 @@ fun HomeScreen(
     isDarkTheme: Boolean = false,
     onToggleDarkTheme: () -> Unit = {},
     onViewAbout: () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {}
+    bottomBar: @Composable () -> Unit = {},
+    quickStatStreak: Int = 0,
+    quickStatAvgCoherence: Double = 0.0,
+    quickStatTotalSongs: Long = 0
 ) {
     Scaffold(
         topBar = {
@@ -108,6 +113,32 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            // Quick stats dashboard (only shown when user has data)
+            if (quickStatTotalSongs > 0) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    QuickStatChip(
+                        label = "Streak",
+                        value = "${quickStatStreak}d",
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickStatChip(
+                        label = "Avg",
+                        value = "${(quickStatAvgCoherence * 100).toInt()}%",
+                        valueColor = coherenceColor(quickStatAvgCoherence),
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickStatChip(
+                        label = "Songs",
+                        value = "$quickStatTotalSongs",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             // Connection status bar
             val connectionCardColor by animateColorAsState(
                 targetValue = when (connectionState) {
@@ -421,6 +452,40 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun QuickStatChip(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color? = null
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = valueColor ?: MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

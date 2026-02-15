@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -90,6 +91,7 @@ fun SessionScreen(
     onRequestNotificationListener: () -> Unit,
     onRequestOverlayPermission: () -> Unit,
     topSongs: List<TopSongUi> = emptyList(),
+    onShareResults: (String) -> Unit = {},
     onBack: () -> Unit
 ) {
     var showSearchSheet by remember { mutableStateOf(false) }
@@ -228,7 +230,7 @@ fun SessionScreen(
                                                         text = "${(song.score * 100).toInt()}%",
                                                         style = MaterialTheme.typography.titleMedium,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.primary
+                                                        color = coherenceColor(song.score)
                                                     )
                                                     Text(
                                                         text = "${song.listenCount}x",
@@ -339,7 +341,8 @@ fun SessionScreen(
                         playlistCreated = playlistCreated,
                         isCreatingPlaylist = isCreatingPlaylist,
                         onCreatePlaylist = onCreatePlaylist,
-                        onNewSession = onResetSession
+                        onNewSession = onResetSession,
+                        onShareResults = onShareResults
                     )
                 }
             }
@@ -402,7 +405,7 @@ private fun NotStartedContent(
                 Text(
                     text = "Coherence: ${(hrvMetrics.coherenceScore * 100).toInt()}%",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = coherenceColor(hrvMetrics.coherenceScore)
                 )
             } else {
                 Text(
@@ -566,7 +569,9 @@ private fun CoherenceHeader(hrvMetrics: HrvMetrics?) {
                         "${(hrvMetrics.coherenceScore * 100).toInt()}%"
                     else "---",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = if (hrvMetrics != null) coherenceColor(hrvMetrics.coherenceScore)
+                    else MaterialTheme.colorScheme.onSurface
                 )
             }
             if (hrvMetrics != null) {
@@ -683,7 +688,8 @@ private fun EndedContent(
     playlistCreated: String?,
     isCreatingPlaylist: Boolean,
     onCreatePlaylist: () -> Unit,
-    onNewSession: () -> Unit
+    onNewSession: () -> Unit,
+    onShareResults: (String) -> Unit = {}
 ) {
     val validResults = sessionResults.filter { it.isValid }
     val bestSong = validResults.maxByOrNull { it.avgCoherence }
@@ -691,11 +697,35 @@ private fun EndedContent(
         validResults.map { it.avgCoherence }.average() else 0.0
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = "Session Complete",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Session Complete",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (validResults.isNotEmpty()) {
+                IconButton(onClick = {
+                    val shareText = buildString {
+                        append("HrvXo Session: ${validResults.size} song${if (validResults.size != 1) "s" else ""}")
+                        append(" | Avg coherence: ${(avgCoherence * 100).toInt()}%")
+                        if (bestSong != null) {
+                            append("\nBest: ${bestSong.searchResult.title} — ${(bestSong.avgCoherence * 100).toInt()}%")
+                        }
+                        append("\n\nDiscover your music-heart connection with HrvXo")
+                    }
+                    onShareResults(shareText)
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share results"
+                    )
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         if (validResults.isEmpty() && sessionResults.isEmpty()) {
