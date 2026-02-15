@@ -209,7 +209,8 @@ class SessionViewModel(
                         avgRmssd = result.avgRmssd,
                         meanHr = result.meanHr,
                         durationListenedSec = result.durationListenedSec.toLong(),
-                        sessionDate = now
+                        sessionDate = now,
+                        movementDetected = result.movementDetected
                     )
                 }
             }

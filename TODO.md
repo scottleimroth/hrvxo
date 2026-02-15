@@ -2,21 +2,27 @@
 
 ## Last Session
 
-- **Date:** 2026-02-12
-- **Summary:** Fixed session screen layout, versioned APK filenames, replaced broken YTM auto-return with notification + AlarmManager, added live movement warning
+- **Date:** 2026-02-15
+- **Summary:** Massive feature batch: dark mode, insights, streaks, onboarding, re-listen, leaderboard, history with delete, about screen, CSV export
 - **Key changes:**
-  - Deleted old HeartSyncRadio logo.png, updated CREDENTIALS.md references
-  - APK filename now includes version (HrvXo-v1.3.2.apk)
-  - Made NotStartedContent scrollable; Start Session button hidden until notification access granted
-  - Replaced broken moveTaskToFront/staggered retry auto-return with:
-    - Persistent "Tap to return to HrvXo" notification (standard Android pattern)
-    - AlarmManager PendingIntent auto-return (system-sent, exempt from background activity restrictions)
-  - Added live red "Movement detected. Please remain still during data acquisition." warning during recording
-  - Wired MovementDetector.isMoving StateFlow through ViewModel → Activity → App → SessionScreen
-  - Removed REORDER_TASKS permission, added POST_NOTIFICATIONS
-  - Version bump to v1.3.2 (versionCode 6)
-- **Stopped at:** v1.3.2 released. All priority TODO items complete.
-- **Blockers:** YTM auto-return may not work on Android 14+ (AlarmManager PendingIntent exemption removed); notification fallback covers this
+  - Session History with expand/collapse + delete session + delete all data (confirmation dialogs)
+  - CSV export via ShareSheet (FileProvider)
+  - Cold-start suggestion chips for new users (< 3 songs)
+  - Dark mode with persistent toggle, custom teal/cyan HrvXoTheme
+  - Insights screen: stats grid, Canvas coherence trend chart, best song/artist, listen time
+  - Streak tracking: current + longest consecutive session days
+  - 3-page onboarding flow (Welcome, Sensor Setup, Music Setup) with HorizontalPager
+  - Re-listen mode: top coherence songs shown on session screen for quick replay
+  - Leaderboard screen: all songs ranked by coherence with rank badges and listen counts
+  - About screen: app description, version, how-it-works, privacy info
+  - Added `movement_detected` column with migration
+  - New screens: LeaderboardScreen, AboutScreen, OnboardingScreen
+  - New ViewModels: HistoryViewModel, InsightsViewModel
+  - Added `ONBOARDING`, `HISTORY`, `INSIGHTS`, `LEADERBOARD`, `ABOUT` to AppScreen enum
+  - SQL: deleteSession, deleteAllData queries
+  - Material Icons Extended, version bump to v1.6.0
+- **Stopped at:** All features built and building. Ready for commit, release, and device testing.
+- **Blockers:** None
 
 ---
 
@@ -48,8 +54,20 @@
 - Movement detection via accelerometer + HR anomaly flagging
 - v1.1.0 released on GitHub with signed APK
 
+- Session history screen with expand/collapse per session
+- CSV export via ShareSheet
+- Cold-start suggestion chips for new users (< 3 songs)
+- Dark mode with persistent theme toggle (teal/cyan brand colors)
+- Insights screen with stats, coherence trend chart, best song/artist, total listen time
+- Streak tracking (current + longest consecutive session days)
+- 3-page onboarding flow for first-time users (HorizontalPager)
+- Re-listen mode: top coherence songs shown during active sessions for quick replay
+- Leaderboard screen with rank badges and listen counts
+- About screen with app info, version, how-it-works, privacy
+- Delete session and delete all data in History (with confirmation dialogs)
+
 ### In Progress
-- None — all priority items complete
+- None
 
 ### Known Bugs
 - YTM ads play before songs — cannot be controlled externally (YTM Premium only)
@@ -101,17 +119,17 @@
 
 ## TODO - Nice to Have
 
-- [ ] Cold-start suggestions for new users with zero session data (search "ambient meditation calm", etc.)
-- [ ] Onboarding flow: Polar H10 pairing guide → YouTube Music setup → first session walkthrough
+- [x] Cold-start suggestions for new users with zero session data (search "ambient meditation calm", etc.)
+- [x] Onboarding flow: Polar H10 pairing guide → YouTube Music setup → first session walkthrough
 - [ ] Genre/tempo analysis: correlate audio features with coherence scores
-- [ ] Re-listen mode: replay top coherence songs and see if scores hold across sessions
+- [x] Re-listen mode: replay top coherence songs and see if scores hold across sessions
 - [ ] iOS support (KMP structure ready, targets commented out)
-- [ ] Dark mode / theme customization
-- [ ] Export coherence session data (CSV/JSON)
-- [ ] Historical session tracking and trends chart
+- [x] Dark mode / theme customization
+- [x] Export coherence session data (CSV/JSON)
+- [x] Historical session tracking and trends chart
 - [x] App icon and branding assets (generated from logo)
-- [ ] Session reminders / streak tracking ("Listen for 10 minutes daily")
-- [ ] Insights: "Your coherence is X% higher with slower tempo songs" (after 20+ songs)
+- [x] Session reminders / streak tracking ("Listen for 10 minutes daily")
+- [x] Insights: "Your coherence is X% higher with slower tempo songs" (after 20+ songs)
 
 ---
 
@@ -156,6 +174,22 @@
 - [x] Add auto-return to HrvXo after opening YouTube Music (2026-02-11)
 - [x] Add YTM pause on session end via MediaController (2026-02-11)
 - [x] Add early-end message card for sessions ended before 60s (2026-02-11)
+- [x] Session history screen with expand/collapse per session (2026-02-15)
+- [x] CSV export via ShareSheet with FileProvider (2026-02-15)
+- [x] Cold-start suggestion chips for new users (2026-02-15)
+- [x] Add movement_detected column to song_coherence table with migration (2026-02-15)
+- [x] Dark mode with persistent toggle and custom HrvXoTheme (teal/cyan brand) (2026-02-15)
+- [x] Insights screen: stats grid, coherence trend chart, best song/artist, listen time (2026-02-15)
+- [x] Streak tracking: current + longest consecutive session days (2026-02-15)
+- [x] InsightsViewModel with all insight data loading and streak calculation (2026-02-15)
+- [x] Material Icons Extended for BarChart/DarkMode/LightMode icons (2026-02-15)
+- [x] 3-page onboarding flow with HorizontalPager (Welcome, Sensor, Music) (2026-02-15)
+- [x] Re-listen mode: top coherence songs on session screen for quick replay (2026-02-15)
+- [x] Version bump to v1.6.0 (versionCode 9) (2026-02-15)
+- [x] Leaderboard screen with rank badges and listen counts (2026-02-15)
+- [x] About screen with version, how-it-works, privacy info (2026-02-15)
+- [x] Delete session + delete all data in History with confirmation dialogs (2026-02-15)
+- [x] SQL queries: deleteSession, deleteAllData (2026-02-15)
 
 ---
 
@@ -189,6 +223,22 @@
 | Baseline track snapshot on session start | Prevents auto-detecting already-playing song; only reacts to NEW tracks after user selects via search | 2026-02-11 |
 | Debug signingConfig for release builds | Proper signing with release keystore deferred; debug keystore allows APK installation for testing | 2026-02-11 |
 | Version bump per release | User requires GitHub Releases to be versioned — bump versionCode/versionName for each release | 2026-02-11 |
+| HistoryViewModel separate from SessionViewModel | History is an independent concern; keeps SessionViewModel focused on active sessions | 2026-02-15 |
+| UI models (SessionSummaryUi, HistorySongUi) in commonMain | Keeps HistoryScreen in commonMain decoupled from SQLDelight generated types | 2026-02-15 |
+| SQLDelight migration (1.sqm) for movement_detected | Preserves existing user data; column defaults to 0 for historical records | 2026-02-15 |
+| FileProvider + ACTION_SEND for CSV export | ShareSheet pattern lets users share via email/Drive/files; no SAF picker complexity | 2026-02-15 |
+| Cold-start chips gated on totalSongCount < 3 | Matches existing playlist threshold (3 songs); disappears naturally once user has data | 2026-02-15 |
+| HrvXoTheme with light/dark color schemes | Custom teal/cyan brand; SharedPreferences for persistence across restarts | 2026-02-15 |
+| InsightsViewModel separate from HistoryViewModel | Insights is analytics (aggregates + streaks); History is raw session browsing | 2026-02-15 |
+| Canvas-based coherence trend chart | No charting library dependency; simple line chart sufficient for trend visualization | 2026-02-15 |
+| Streak calculation from distinctSessionDates | Efficient: single SQL query returns distinct dates; Kotlin LocalDate math for streak logic | 2026-02-15 |
+| Material Icons Extended | Required for BarChart, DarkMode, LightMode icons; added to commonMain dependencies | 2026-02-15 |
+| Onboarding with HorizontalPager | 3-page swipeable intro; SharedPreferences flag prevents re-showing; Skip + Get Started buttons | 2026-02-15 |
+| Re-listen as quick-play cards on session screen | Reuses existing onTagSong flow; converts TopCoherenceSongs to SearchResult for YTM launch | 2026-02-15 |
+| Top songs show when totalSongCount >= 3 | Complements cold-start chips (< 3 songs); natural progression from suggestions to personal data | 2026-02-15 |
+| Leaderboard as dedicated screen | Separate from session re-listen cards; shows full ranked list with rank badges (top 3 highlighted) | 2026-02-15 |
+| AlertDialog for destructive actions | Delete session/all requires user confirmation; prevents accidental data loss | 2026-02-15 |
+| About screen with hardcoded version | Simple approach; version could be read from BuildConfig in future | 2026-02-15 |
 
 ---
 

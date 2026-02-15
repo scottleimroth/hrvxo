@@ -1,7 +1,7 @@
 package com.heartsyncradio
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import com.heartsyncradio.ui.theme.HrvXoTheme
 import com.heartsyncradio.hrv.HrvMetrics
 import com.heartsyncradio.model.ConnectionState
 import com.heartsyncradio.model.HeartRateData
@@ -10,10 +10,19 @@ import com.heartsyncradio.music.SearchResult
 import com.heartsyncradio.music.SessionPhase
 import com.heartsyncradio.music.SongSessionResult
 import com.heartsyncradio.music.TaggedSong
+import com.heartsyncradio.ui.AboutScreen
+import com.heartsyncradio.ui.HistoryScreen
+import com.heartsyncradio.ui.HistorySongUi
 import com.heartsyncradio.ui.HomeScreen
+import com.heartsyncradio.ui.InsightsScreen
+import com.heartsyncradio.ui.InsightsUi
+import com.heartsyncradio.ui.LeaderboardScreen
+import com.heartsyncradio.ui.OnboardingScreen
 import com.heartsyncradio.ui.SessionScreen
+import com.heartsyncradio.ui.SessionSummaryUi
+import com.heartsyncradio.ui.TopSongUi
 
-enum class AppScreen { HOME, SESSION }
+enum class AppScreen { ONBOARDING, HOME, SESSION, HISTORY, INSIGHTS, LEADERBOARD, ABOUT }
 
 @Composable
 fun App(
@@ -65,10 +74,37 @@ fun App(
     onResetSession: () -> Unit = {},
     onClearSearchError: () -> Unit = {},
     onRequestNotificationListener: () -> Unit = {},
-    onRequestOverlayPermission: () -> Unit = {}
+    onRequestOverlayPermission: () -> Unit = {},
+    topSongs: List<TopSongUi> = emptyList(),
+    // History parameters
+    historySessions: List<SessionSummaryUi> = emptyList(),
+    expandedSessionDates: Set<Long> = emptySet(),
+    expandedSessionSongs: Map<Long, List<HistorySongUi>> = emptyMap(),
+    isExporting: Boolean = false,
+    onToggleSession: (Long) -> Unit = {},
+    onExportCsv: () -> Unit = {},
+    onDeleteSession: (Long) -> Unit = {},
+    onDeleteAllData: () -> Unit = {},
+    onViewHistory: () -> Unit = {},
+    // Theme
+    isDarkTheme: Boolean = false,
+    onToggleDarkTheme: () -> Unit = {},
+    // Insights
+    insights: InsightsUi = InsightsUi(),
+    onViewInsights: () -> Unit = {},
+    // Leaderboard
+    onViewLeaderboard: () -> Unit = {},
+    // About
+    versionName: String = "",
+    onViewAbout: () -> Unit = {},
+    // Onboarding
+    onOnboardingComplete: () -> Unit = {}
 ) {
-    MaterialTheme {
+    HrvXoTheme(darkTheme = isDarkTheme) {
         when (currentScreen) {
+            AppScreen.ONBOARDING -> OnboardingScreen(
+                onComplete = onOnboardingComplete
+            )
             AppScreen.HOME -> HomeScreen(
                 connectionState = connectionState,
                 heartRateData = heartRateData,
@@ -91,7 +127,36 @@ fun App(
                 onRequestPermissions = onRequestPermissions,
                 onRequestBluetooth = onRequestBluetooth,
                 onRequestLocation = onRequestLocation,
-                onStartSession = { onNavigate(AppScreen.SESSION) }
+                onStartSession = { onNavigate(AppScreen.SESSION) },
+                onViewHistory = onViewHistory,
+                isDarkTheme = isDarkTheme,
+                onToggleDarkTheme = onToggleDarkTheme,
+                onViewInsights = onViewInsights,
+                onViewLeaderboard = onViewLeaderboard,
+                onViewAbout = onViewAbout
+            )
+            AppScreen.INSIGHTS -> InsightsScreen(
+                insights = insights,
+                onBack = { onNavigate(AppScreen.HOME) }
+            )
+            AppScreen.HISTORY -> HistoryScreen(
+                sessions = historySessions,
+                expandedSessionDates = expandedSessionDates,
+                expandedSessionSongs = expandedSessionSongs,
+                isExporting = isExporting,
+                onToggleSession = onToggleSession,
+                onExportCsv = onExportCsv,
+                onDeleteSession = onDeleteSession,
+                onDeleteAllData = onDeleteAllData,
+                onBack = { onNavigate(AppScreen.HOME) }
+            )
+            AppScreen.LEADERBOARD -> LeaderboardScreen(
+                songs = topSongs,
+                onBack = { onNavigate(AppScreen.HOME) }
+            )
+            AppScreen.ABOUT -> AboutScreen(
+                versionName = versionName,
+                onBack = { onNavigate(AppScreen.HOME) }
             )
             AppScreen.SESSION -> SessionScreen(
                 sessionPhase = sessionPhase,
@@ -119,6 +184,7 @@ fun App(
                 onClearSearchError = onClearSearchError,
                 onRequestNotificationListener = onRequestNotificationListener,
                 onRequestOverlayPermission = onRequestOverlayPermission,
+                topSongs = topSongs,
                 onBack = {
                     onResetSession()
                     onNavigate(AppScreen.HOME)

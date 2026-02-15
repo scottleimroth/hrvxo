@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
+import android.widget.Toast
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
@@ -22,6 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import androidx.core.location.LocationManagerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,22 +36,33 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
+import java.io.File
 import com.heartsyncradio.di.AppModule
 import com.heartsyncradio.di.DeviceMode
 import com.heartsyncradio.music.MusicDetectionService
 import com.heartsyncradio.permission.BlePermissionHandler
+import com.heartsyncradio.ui.HistorySongUi
+import com.heartsyncradio.ui.InsightsUi
+import com.heartsyncradio.ui.SessionSummaryUi
+import com.heartsyncradio.ui.TopSongUi
+import com.heartsyncradio.viewmodel.HistoryViewModel
 import com.heartsyncradio.viewmodel.HomeViewModel
+import com.heartsyncradio.viewmodel.InsightsViewModel
 import com.heartsyncradio.viewmodel.SessionViewModel
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var viewModel: HomeViewModel
     private lateinit var sessionViewModel: SessionViewModel
+    private lateinit var historyViewModel: HistoryViewModel
+    private lateinit var insightsViewModel: InsightsViewModel
+    private var showOnboarding by mutableStateOf(false)
     private var currentScreen by mutableStateOf(AppScreen.HOME)
     private var notificationListenerEnabled by mutableStateOf(false)
     private var overlayPermissionGranted by mutableStateOf(false)
     private var bluetoothEnabled by mutableStateOf(false)
     private var locationEnabled by mutableStateOf(false)
+    private var isDarkTheme by mutableStateOf(false)
 
     companion object {
         private const val RETURN_CHANNEL_ID = "hrvxo_return"
@@ -78,6 +95,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         createReturnNotificationChannel()
 
+        val prefs = getSharedPreferences("hrvxo_prefs", MODE_PRIVATE)
+        isDarkTheme = prefs.getBoolean("dark_theme", false)
+        showOnboarding = !prefs.getBoolean("onboarding_complete", false)
+        if (showOnboarding) currentScreen = AppScreen.ONBOARDING
+
         viewModel = ViewModelProvider(
             this,
             AppModule.provideHomeViewModelFactory(this)
@@ -87,6 +109,16 @@ class MainActivity : ComponentActivity() {
             this,
             AppModule.provideSessionViewModelFactory(this)
         )[SessionViewModel::class.java]
+
+        historyViewModel = ViewModelProvider(
+            this,
+            AppModule.provideHistoryViewModelFactory(this)
+        )[HistoryViewModel::class.java]
+
+        insightsViewModel = ViewModelProvider(
+            this,
+            AppModule.provideInsightsViewModelFactory(this)
+        )[InsightsViewModel::class.java]
 
         checkReadiness()
         notificationListenerEnabled = MusicDetectionService.isEnabled(this)
@@ -118,6 +150,67 @@ class MainActivity : ComponentActivity() {
             val playlistCreated by sessionViewModel.playlistCreated.collectAsStateWithLifecycle()
             val isCreatingPlaylist by sessionViewModel.isCreatingPlaylist.collectAsStateWithLifecycle()
             val isMoving by sessionViewModel.isMoving.collectAsStateWithLifecycle()
+            val topSongsDb by sessionViewModel.topSongs.collectAsStateWithLifecycle()
+            val topSongsUi = topSongsDb.map { s ->
+                TopSongUi(
+                    videoId = s.video_id,
+                    title = s.title,
+                    artist = s.artist,
+                    score = s.score ?: 0.0,
+                    listenCount = s.listen_count
+                )
+            }
+
+            // Insights state
+            val insightsState by insightsViewModel.state.collectAsStateWithLifecycle()
+            val insightsUi = InsightsUi(
+                totalListens = insightsState.totalListens,
+                uniqueSongs = insightsState.uniqueSongs,
+                totalSessions = insightsState.totalSessions,
+                overallAvgCoherence = insightsState.overallAvgCoherence,
+                allTimeBestCoherence = insightsState.allTimeBestCoherence,
+                totalListenMinutes = insightsState.totalListenTimeSec / 60,
+                bestSongTitle = insightsState.bestSongTitle,
+                bestSongArtist = insightsState.bestSongArtist,
+                topArtist = insightsState.topArtist,
+                topArtistCoherence = insightsState.topArtistCoherence,
+                topArtistListenCount = insightsState.topArtistListenCount,
+                trendCoherences = insightsState.coherenceTrend.map { it.avgCoherence },
+                currentStreak = insightsState.currentStreak,
+                longestStreak = insightsState.longestStreak,
+                isLoaded = insightsState.isLoaded
+            )
+
+            // History state
+            val historySessions by historyViewModel.sessions.collectAsStateWithLifecycle()
+            val historyExpandedSongs by historyViewModel.expandedSessionSongs.collectAsStateWithLifecycle()
+            val isExporting by historyViewModel.isExporting.collectAsStateWithLifecycle()
+
+            // Map DB types to UI models
+            val historySessionsUi = historySessions.map { s ->
+                SessionSummaryUi(
+                    sessionDate = s.session_date,
+                    formattedDate = HistoryViewModel.formatDate(s.session_date),
+                    songCount = s.song_count,
+                    avgCoherence = s.avg_coh ?: 0.0,
+                    bestCoherence = s.best_coh ?: 0.0,
+                    bestTitle = s.best_title,
+                    bestArtist = s.best_artist
+                )
+            }
+            val historyExpandedSongsUi = historyExpandedSongs.mapValues { (_, songs) ->
+                songs.map { song ->
+                    HistorySongUi(
+                        title = song.title,
+                        artist = song.artist,
+                        avgCoherence = song.avg_coherence,
+                        avgRmssd = song.avg_rmssd,
+                        meanHr = song.mean_hr,
+                        durationSec = song.duration_listened_sec,
+                        movementDetected = song.movement_detected != 0L
+                    )
+                }
+            }
 
             App(
                 currentScreen = currentScreen,
@@ -209,6 +302,39 @@ class MainActivity : ComponentActivity() {
                     startActivity(
                         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
                     )
+                },
+                topSongs = topSongsUi,
+                // History parameters
+                historySessions = historySessionsUi,
+                expandedSessionDates = historyExpandedSongsUi.keys,
+                expandedSessionSongs = historyExpandedSongsUi,
+                isExporting = isExporting,
+                onToggleSession = historyViewModel::toggleSession,
+                onExportCsv = ::exportCsv,
+                onDeleteSession = historyViewModel::deleteSession,
+                onDeleteAllData = historyViewModel::deleteAllData,
+                onViewHistory = { currentScreen = AppScreen.HISTORY },
+                // Theme
+                isDarkTheme = isDarkTheme,
+                onToggleDarkTheme = {
+                    isDarkTheme = !isDarkTheme
+                    prefs.edit().putBoolean("dark_theme", isDarkTheme).apply()
+                },
+                // Insights
+                insights = insightsUi,
+                onViewInsights = {
+                    insightsViewModel.refresh()
+                    currentScreen = AppScreen.INSIGHTS
+                },
+                // Leaderboard
+                onViewLeaderboard = { currentScreen = AppScreen.LEADERBOARD },
+                // About
+                versionName = "1.6.0",
+                onViewAbout = { currentScreen = AppScreen.ABOUT },
+                // Onboarding
+                onOnboardingComplete = {
+                    prefs.edit().putBoolean("onboarding_complete", true).apply()
+                    currentScreen = AppScreen.HOME
                 }
             )
         }
@@ -297,6 +423,27 @@ class MainActivity : ComponentActivity() {
     private fun cancelReturnNotification() {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(RETURN_NOTIFICATION_ID)
+    }
+
+    private val exportScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private fun exportCsv() {
+        exportScope.launch {
+            try {
+                val csv = historyViewModel.generateCsvExport()
+                val file = File(cacheDir, "hrvxo_export.csv")
+                file.writeText(csv)
+                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.provider", file)
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(intent, "Export HrvXo Data"))
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Export failed", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onDestroy() {

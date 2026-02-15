@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -67,12 +74,50 @@ fun HomeScreen(
     onRequestPermissions: () -> Unit,
     onRequestBluetooth: () -> Unit = {},
     onRequestLocation: () -> Unit = {},
-    onStartSession: () -> Unit = {}
+    onStartSession: () -> Unit = {},
+    onViewHistory: () -> Unit = {},
+    isDarkTheme: Boolean = false,
+    onToggleDarkTheme: () -> Unit = {},
+    onViewInsights: () -> Unit = {},
+    onViewLeaderboard: () -> Unit = {},
+    onViewAbout: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("HrvXo") },
+                actions = {
+                    IconButton(onClick = onViewAbout) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "About"
+                        )
+                    }
+                    IconButton(onClick = onToggleDarkTheme) {
+                        Icon(
+                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkTheme) "Light mode" else "Dark mode"
+                        )
+                    }
+                    IconButton(onClick = onViewLeaderboard) {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = "Leaderboard"
+                        )
+                    }
+                    IconButton(onClick = onViewInsights) {
+                        Icon(
+                            imageVector = Icons.Default.BarChart,
+                            contentDescription = "Insights"
+                        )
+                    }
+                    IconButton(onClick = onViewHistory) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.List,
+                            contentDescription = "Session History"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )

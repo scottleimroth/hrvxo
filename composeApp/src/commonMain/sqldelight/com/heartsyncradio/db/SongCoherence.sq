@@ -7,14 +7,15 @@ CREATE TABLE song_coherence (
     avg_rmssd REAL NOT NULL,
     mean_hr REAL NOT NULL,
     duration_listened_sec INTEGER NOT NULL,
-    session_date INTEGER NOT NULL
+    session_date INTEGER NOT NULL,
+    movement_detected INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_video_id ON song_coherence(video_id);
 
 insertSong:
-INSERT INTO song_coherence(video_id, title, artist, avg_coherence, avg_rmssd, mean_hr, duration_listened_sec, session_date)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO song_coherence(video_id, title, artist, avg_coherence, avg_rmssd, mean_hr, duration_listened_sec, session_date, movement_detected)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 topCoherenceSongs:
 SELECT video_id, title, artist, AVG(avg_coherence) AS score, COUNT(*) AS listen_count
@@ -30,3 +31,67 @@ ORDER BY id ASC;
 
 songCount:
 SELECT COUNT(DISTINCT video_id) FROM song_coherence;
+
+allSessionSummaries:
+SELECT
+    s.session_date,
+    s.song_count,
+    s.avg_coh,
+    s.best_coh,
+    b.title AS best_title,
+    b.artist AS best_artist
+FROM (
+    SELECT session_date,
+           COUNT(*) AS song_count,
+           AVG(avg_coherence) AS avg_coh,
+           MAX(avg_coherence) AS best_coh
+    FROM song_coherence
+    GROUP BY session_date
+) s
+LEFT JOIN song_coherence b ON b.session_date = s.session_date AND b.avg_coherence = s.best_coh
+GROUP BY s.session_date
+ORDER BY s.session_date DESC;
+
+allSongsForExport:
+SELECT * FROM song_coherence
+ORDER BY session_date DESC, id ASC;
+
+-- Insights queries
+overallStats:
+SELECT
+    COUNT(*) AS total_listens,
+    COUNT(DISTINCT video_id) AS unique_songs,
+    COUNT(DISTINCT session_date) AS total_sessions,
+    AVG(avg_coherence) AS overall_avg_coherence,
+    MAX(avg_coherence) AS all_time_best_coherence,
+    SUM(duration_listened_sec) AS total_listen_time_sec
+FROM song_coherence;
+
+topArtistByCoherence:
+SELECT artist, AVG(avg_coherence) AS avg_coh, COUNT(*) AS listen_count
+FROM song_coherence
+GROUP BY artist
+HAVING listen_count >= 2
+ORDER BY avg_coh DESC
+LIMIT 1;
+
+coherenceTrend:
+SELECT session_date, AVG(avg_coherence) AS avg_coh
+FROM song_coherence
+GROUP BY session_date
+ORDER BY session_date ASC;
+
+allTimeBestSong:
+SELECT title, artist, avg_coherence
+FROM song_coherence
+ORDER BY avg_coherence DESC
+LIMIT 1;
+
+distinctSessionDates:
+SELECT DISTINCT session_date FROM song_coherence ORDER BY session_date ASC;
+
+deleteSession:
+DELETE FROM song_coherence WHERE session_date = ?;
+
+deleteAllData:
+DELETE FROM song_coherence;

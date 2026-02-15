@@ -3,6 +3,8 @@ package com.heartsyncradio.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Row
@@ -28,6 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -50,7 +53,15 @@ import com.heartsyncradio.music.SongSessionResult
 import com.heartsyncradio.music.TaggedSong
 import com.heartsyncradio.ui.components.SongResultCard
 
-@OptIn(ExperimentalMaterial3Api::class)
+data class TopSongUi(
+    val videoId: String,
+    val title: String,
+    val artist: String,
+    val score: Double,
+    val listenCount: Long
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SessionScreen(
     sessionPhase: SessionPhase,
@@ -78,6 +89,7 @@ fun SessionScreen(
     onClearSearchError: () -> Unit,
     onRequestNotificationListener: () -> Unit,
     onRequestOverlayPermission: () -> Unit,
+    topSongs: List<TopSongUi> = emptyList(),
     onBack: () -> Unit
 ) {
     var showSearchSheet by remember { mutableStateOf(false) }
@@ -138,6 +150,97 @@ fun SessionScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            if (totalSongCount < 3) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Try one of these:",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    listOf(
+                                        "ambient meditation",
+                                        "lo-fi chill",
+                                        "classical piano",
+                                        "nature sounds"
+                                    ).forEach { query ->
+                                        SuggestionChip(
+                                            onClick = {
+                                                onSearchSongs(query)
+                                                showSearchSheet = true
+                                            },
+                                            label = { Text(query) }
+                                        )
+                                    }
+                                }
+                            } else if (topSongs.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Re-listen to your top songs:",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    topSongs.take(5).forEach { song ->
+                                        Card(
+                                            onClick = {
+                                                onTagSong(
+                                                    SearchResult(
+                                                        videoId = song.videoId,
+                                                        title = song.title,
+                                                        artist = song.artist
+                                                    )
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                            )
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = song.title,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                    Text(
+                                                        text = song.artist,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                Column(horizontalAlignment = Alignment.End) {
+                                                    Text(
+                                                        text = "${(song.score * 100).toInt()}%",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.primary
+                                                    )
+                                                    Text(
+                                                        text = "${song.listenCount}x",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             Spacer(modifier = Modifier.height(24.dp))
                             Button(onClick = { showSearchSheet = true }) {
                                 Text("Search Songs")

@@ -12,7 +12,9 @@ import com.heartsyncradio.music.MusicApiClient
 import com.heartsyncradio.music.SongCoherenceRepository
 import com.heartsyncradio.polar.PolarManager
 import com.heartsyncradio.sensor.MovementDetector
+import com.heartsyncradio.viewmodel.HistoryViewModel
 import com.heartsyncradio.viewmodel.HomeViewModel
+import com.heartsyncradio.viewmodel.InsightsViewModel
 import com.heartsyncradio.viewmodel.SessionViewModel
 
 enum class DeviceMode {
@@ -110,6 +112,24 @@ object AppModule {
                     repository = getRepository(ctx),
                     movementDetector = getMovementDetector(ctx)
                 )
+            }
+        }
+    }
+
+    fun provideInsightsViewModelFactory(context: Context): ViewModelProvider.Factory {
+        val ctx = context.applicationContext
+        return viewModelFactory {
+            initializer {
+                InsightsViewModel(repository = getRepository(ctx))
+            }
+        }
+    }
+
+    fun provideHistoryViewModelFactory(context: Context): ViewModelProvider.Factory {
+        val ctx = context.applicationContext
+        return viewModelFactory {
+            initializer {
+                HistoryViewModel(repository = getRepository(ctx))
             }
         }
     }
